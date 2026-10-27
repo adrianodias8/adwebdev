@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{title}</title>
+    {seo}
+    <meta name="theme-color" content="#121312">
+    <link rel="preload" href="/assets/fonts/VT323-normal-400.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="preload" href="/assets/fonts/SchibstedGrotesk-normal-400-900.woff2" as="font" type="font/woff2" crossorigin>
+    <link rel="stylesheet" href="/assets/css/main.css">
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <script>if (window.top !== window.self) document.documentElement.classList.add("in-browser");</script>
+</head>
+<body class="web">
+    <a class="skip" href="#main">Skip to content</a>
+    <header class="web-header">
+        <a class="web-header__mark" href="/" target="_top" aria-label="{site.name}, home"><include src="logo-mark.html" /></a>
+        <a class="web-header__name" href="/" target="_top">{site.name}</a>
+        <nav class="web-header__nav" aria-label="Site">
+            <a href="/writing/">Writing</a>
+            <a href="/about/">About</a>
+            <a class="web-header__desk" href="/" target="_top">Back to the desktop</a>
+        </nav>
+    </header>
+    <main id="main" class="web-main">
+        {slot}
+    </main>
+    <footer class="web-footer">
+        <p>{site.name} · Web developer in Brussels · <a href="mailto:{site.email}">{site.email}</a></p>
+    </footer>
+</body>
+</html>

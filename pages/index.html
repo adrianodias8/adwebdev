@@ -20,91 +20,141 @@
 </div>
 
 <main id="main" class="desktop" data-desktop>
-    <section class="hero" id="desktop" aria-labelledby="hero-title">
+
+    <section class="wallpaper" aria-labelledby="hero-title">
         <h1 id="hero-title" class="visually-hidden">{site.name}</h1>
-        <div class="hero__logo"><include src="logo.html" /></div>
-        <p class="hero__line">Freelance web developer in Brussels. <strong>Drupal &amp; Laravel sites, built and looked after.</strong></p>
+        <div class="wallpaper__logo"><include src="logo.html" /></div>
+        <p class="wallpaper__line">Freelance web developer in Brussels. <strong>Drupal &amp; Laravel sites, built and looked after.</strong></p>
         <include src="book.html" />
     </section>
 
-    <nav class="volumes" aria-label="Desktop">
-        <ForEach collection="volumes" as="v"><a class="volume" href="#{v.id}" data-open="{v.id}"><span class="volume__no">{v.no}</span><span class="volume__file" data-type>{v.file}</span><span class="volume__name">{v.name}</span></a></ForEach>
+    <nav class="desk-icons" aria-label="Desktop">
+        <a class="file desk-icon" href="/#projects" data-open="projects"><svg class="file__icon"><use href="#i-folder"/></svg><span class="file__name">Projects</span></a>
+        <a class="file desk-icon" href="/writing/" data-open="posts"><svg class="file__icon"><use href="#i-folder"/></svg><span class="file__name">Posts</span></a>
     </nav>
 
     <div class="windows">
 
-    <section class="window window--wide" id="services" data-window aria-labelledby="services-title">
-        <include src="window-bar.html" file="services.cfg" close="#desktop" />
-        <div class="window__body">
-            <h2 id="services-title">What I can help with</h2>
-            <p class="window__lead">Most of my work is Drupal and Laravel, from first build to long-term maintenance. Around it, the things a site usually needs.</p>
-            <dl class="config">
-                <ForEach collection="services" as="s"><div class="config__row"><dt>{s.name}</dt><dd>{s.about}</dd></div></ForEach>
-            </dl>
+    <section class="window window--folder" id="projects" data-window aria-labelledby="projects-title">
+        <include src="window-bar.html" title="projects/" close="#main" />
+        <p class="folder__status">3 items · double-click to open</p>
+        <div class="window__body folder">
+            <h2 id="projects-title" class="visually-hidden">Projects</h2>
+            <ul class="icon-view">
+                <ForEach collection="projects" as="p">
+                <li><a class="file" href="<If condition="p.open == 'browser'">{p.url}<Else>#info-{p.id}</If>" data-file data-kind="{p.open}" data-info="info-{p.id}"><svg class="file__icon"><use href="#i-{p.icon}"/></svg><span class="file__name">{p.name}</span></a></li>
+                </ForEach>
+            </ul>
         </div>
     </section>
 
-    <section class="window window--wide" id="experience" data-window aria-labelledby="experience-title">
-        <include src="window-bar.html" file="experience.log" close="#desktop" />
+    <ForEach collection="projects" as="p" where="p.open == 'info'">
+    <section class="window window--info" id="info-{p.id}" data-window aria-labelledby="info-{p.id}-title">
+        <include src="window-bar.html" title="{p.id}.info" close="#main" />
+        <div class="window__body info">
+            <div class="info__head">
+                <svg class="info__icon"><use href="#i-{p.icon}"/></svg>
+                <div>
+                    <h2 id="info-{p.id}-title">{p.name}</h2>
+                    <p class="info__kind">{p.kind}</p>
+                </div>
+            </div>
+            <dl class="info__rows">
+                <div><dt>Status</dt><dd>{p.status}</dd></div>
+                <div><dt>About</dt><dd>{p.about}</dd></div>
+                <If condition="p.link"><div><dt>Where</dt><dd><a href="{p.link}">{p.link_label}</a></dd></div></If>
+            </dl>
+        </div>
+    </section>
+    </ForEach>
+
+    <section class="window window--folder" id="posts" data-window aria-labelledby="posts-title">
+        <include src="window-bar.html" title="posts/" close="#main" />
+        <div class="window__body folder folder--list">
+            <h2 id="posts-title" class="visually-hidden">Posts</h2>
+            <table class="list-view">
+                <thead><tr><th scope="col">Name</th><th scope="col">Date</th><th scope="col">Kind</th></tr></thead>
+                <tbody>
+                    <ForEach content="writing" as="post" orderBy="date, desc">
+                    <tr>
+                        <td><a class="file file--row" href="{post.url}" data-file data-kind="browser"><svg class="file__icon"><use href="#i-document"/></svg><span class="file__name">{post.title}</span></a></td>
+                        <td class="list-view__date"><time datetime="{post.date}">{post.date|date:"%-d %b %Y"}</time></td>
+                        <td class="list-view__kind">Web page</td>
+                    </tr>
+                    </ForEach>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="window window--doc" id="profile" data-window aria-labelledby="profile-title">
+        <include src="window-bar.html" title="profile.sys" close="#main" />
+        <div class="window__body profile">
+            <img class="profile__photo" src="/assets/images/adriano.jpg" alt="Black and white portrait of Adriano Dias, wearing round glasses" width="900" height="1350">
+            <div>
+                <h2 id="profile-title">Adriano Dias</h2>
+                <p>A developer from Portugal, living in Brussels. My core expertise is PHP, especially Drupal and Laravel, and I'm just as interested in Linux, Docker and newer things like LLMs. Away from the code you'll usually find me taking photographs.</p>
+                <include src="book.html" />
+                <p class="profile__more"><a href="/about/">The longer version</a> · <a href="{site.github}">GitHub</a></p>
+            </div>
+        </div>
+    </section>
+
+    <section class="window window--doc" id="services" data-window aria-labelledby="services-title">
+        <include src="window-bar.html" title="services.cfg" close="#main" />
         <div class="window__body">
+            <h2 id="services-title">What I can help with</h2>
+            <p class="window__lead">Most of my work is Drupal and Laravel, from first build to long-term maintenance. Around it, the things a site usually needs.</p>
+            <table class="list-view">
+                <thead><tr><th scope="col">Service</th><th scope="col">What it covers</th></tr></thead>
+                <tbody>
+                    <ForEach collection="services" as="s"><tr class="config__row"><th scope="row">{s.name}</th><td>{s.about}</td></tr></ForEach>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <section class="window window--doc" id="experience" data-window aria-labelledby="experience-title">
+        <include src="window-bar.html" title="experience.log" close="#main" />
+        <div class="window__body page-sheet">
             <h2 id="experience-title">Where I've worked</h2>
             <p class="window__lead">I started at 17, on an internship, the year Drupal 7 came out.</p>
             <include src="experience.html" />
         </div>
     </section>
 
-    <section class="window window--wide" id="projects" data-window aria-labelledby="projects-title">
-        <include src="window-bar.html" file="projects.vol" close="#desktop" />
-        <div class="window__body">
-            <h2 id="projects-title">Something I built</h2>
-            <ForEach collection="projects" as="p">
-            <article class="project">
-                <img class="project__image" src="{p.image}" alt="{p.alt}" width="1776" height="900">
-                <div>
-                    <h3>{p.name}</h3>
-                    <p>{p.about}</p>
-                    <a class="text-action" href="{p.url}">{p.link}</a>
-                </div>
-            </article>
-            </ForEach>
-        </div>
-    </section>
-
-    <section class="window" id="writing" data-window aria-labelledby="writing-title">
-        <include src="window-bar.html" file="writing.txt" close="#desktop" />
-        <div class="window__body">
-            <h2 id="writing-title">Writing</h2>
-            <ol class="files">
-                <ForEach content="writing" as="post" orderBy="date, desc" count="5"><include src="post-row.html" /></ForEach>
-            </ol>
-            <a class="text-action" href="/writing/">All writing</a>
-        </div>
-    </section>
-
-    <section class="window" id="profile" data-window aria-labelledby="profile-title">
-        <include src="window-bar.html" file="profile.sys" close="#desktop" />
-        <div class="window__body profile">
-            <img class="profile__photo" src="/assets/images/adriano.jpg" alt="Black and white portrait of Adriano Dias, wearing round glasses" width="900" height="1350">
-            <div>
-                <h2 id="profile-title">Adriano Dias</h2>
-                <p>A developer from Portugal, living in Brussels. My core expertise is PHP, especially Drupal and Laravel, and I'm just as interested in Linux, Docker and newer things like LLMs. Away from the code you'll usually find me taking photographs.</p>
-                <a class="text-action" href="/about/">More about me</a>
+    <section class="window window--mail" id="contact" data-window aria-labelledby="contact-title">
+        <include src="window-bar.html" title="new-message.eml" close="#main" />
+        <form class="compose" action="mailto:{site.email}" method="get" data-compose data-to="{site.email}">
+            <div class="compose__toolbar">
+                <button class="button" type="submit">Send</button>
+                <a class="text-action" href="{site.booking}" target="_blank" rel="noopener">Or book a call</a>
             </div>
-        </div>
+            <h2 id="contact-title" class="visually-hidden">Write to Adriano</h2>
+            <div class="compose__field"><label for="mail-to">To:</label><input id="mail-to" value="{site.email}" readonly></div>
+            <div class="compose__field"><label for="mail-subject">Subject:</label><input id="mail-subject" name="subject" value="A project"></div>
+            <label class="visually-hidden" for="mail-body">Message</label>
+            <textarea id="mail-body" name="body" rows="9" placeholder="Tell me a little about your project, and when you'd like to start."></textarea>
+        </form>
     </section>
 
-    <section class="window" id="contact" data-window aria-labelledby="contact-title">
-        <include src="window-bar.html" file="contact.app" close="#desktop" />
-        <div class="window__body">
-            <h2 id="contact-title">Have a project in mind?</h2>
-            <p class="window__lead">A 30-minute call is the quickest way to see whether I'm the right fit. No preparation needed.</p>
-            <include src="book.html" />
-            <p class="contact__elsewhere"><a href="{site.github}">GitHub</a> · <a href="/writing/feed.xml">Feed</a></p>
+    <section class="window window--browser" id="browser" data-window aria-labelledby="browser-title">
+        <include src="window-bar.html" title="browser" close="#main" />
+        <h2 id="browser-title" class="visually-hidden">Browser</h2>
+        <div class="browser__toolbar">
+            <button class="tool" type="button" data-back aria-label="Back"><svg><use href="#i-chevron-left"/></svg></button>
+            <button class="tool" type="button" data-forward aria-label="Forward"><svg><use href="#i-chevron-right"/></svg></button>
+            <button class="tool" type="button" data-reload aria-label="Reload"><svg><use href="#i-reload"/></svg></button>
+            <form class="browser__address" data-go><label class="visually-hidden" for="address">Address</label><input id="address" data-address spellcheck="false" autocomplete="off"></form>
+            <a class="tool" href="/writing/" data-external target="_blank" rel="noopener" aria-label="Open in a real tab"><svg><use href="#i-external"/></svg></a>
+            <a href="/writing/" data-browser-home hidden>Home</a>
         </div>
+        <iframe class="browser__frame" data-frame title="Web page"></iframe>
+        <p class="browser__nojs">The browser needs JavaScript. <a href="/writing/">Read the posts as ordinary pages.</a></p>
     </section>
 
     <section class="window window--terminal" id="terminal" data-window aria-labelledby="terminal-title">
-        <include src="window-bar.html" file="terminal" close="#desktop" />
+        <include src="window-bar.html" title="terminal" close="#main" />
         <div class="window__body terminal" data-terminal>
             <h2 id="terminal-title" class="visually-hidden">Terminal</h2>
             <p>adwebdev os. Type <kbd>help</kbd> to see what this can do.</p>
@@ -114,5 +164,16 @@
 
     </div>
 </main>
+
+<nav class="dock" aria-label="Dock">
+    <ul class="dock__shelf">
+        <ForEach collection="dock" as="d">
+        <li><a class="dock__item" href="/#{d.id}" data-open="{d.id}"><span class="dock__icon"><If condition="d.icon == 'photo'"><img src="/assets/images/adriano.jpg" alt="" width="900" height="1350"><Else><svg><use href="#i-{d.icon}"/></svg></If></span><span class="dock__label">{d.name}</span></a></li>
+        </ForEach>
+        <li class="dock__divider" aria-hidden="true"></li>
+        <li><a class="dock__item" href="/#projects" data-open="projects"><span class="dock__icon"><svg><use href="#i-folder"/></svg></span><span class="dock__label">Projects</span></a></li>
+        <li><a class="dock__item" href="/writing/" data-open="posts"><span class="dock__icon"><svg><use href="#i-folder"/></svg></span><span class="dock__label">Posts</span></a></li>
+    </ul>
+</nav>
 
 </layout>

@@ -2,8 +2,10 @@
 
 My site: [adrianodias8.github.io/adwebdev](https://adrianodias8.github.io/adwebdev/)
 
-It is a small operating system. It boots, then opens on a desktop of volumes
-you can open, drag, stack and close, with a terminal that works. Without
+It is a small operating system. It boots, then opens on a desktop with the
+logo as its wallpaper, a Projects and a Posts folder, and a dock of apps:
+windows open, drag, stack, minimise to the dock, zoom and close; posts open
+as web pages in a built-in browser; and the terminal works. Without
 JavaScript it is one ordinary readable page, and reduced motion skips the
 boot.
 
@@ -28,12 +30,13 @@ Pushing to `main` checks, builds and deploys it. See
 | Name, email, booking link | `statico.json` |
 | Services | `collections/services.json` |
 | Career | `collections/experience.json` |
-| Projects | `collections/projects.json` |
-| The desktop's volumes | `collections/volumes.json` |
+| Projects (what opens in the browser, what opens an info window) | `collections/projects.json` |
+| The dock's apps | `collections/dock.json` |
+| Icons | `includes/icons.html` |
 | Posts | `content/writing/*.md` |
 | The boot log and window contents | `pages/index.html` |
 | Bio | `pages/about.html` |
-| The terminal's commands | `assets/js/os.js` |
+| The terminal's commands, the browser, the dock | `assets/js/os.js` |
 | Colours and type | the tokens at the top of `assets/css/main.css` |
 | Logo | `includes/logo.html`, `includes/logo-mark.html` |
 

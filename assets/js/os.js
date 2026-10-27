@@ -1,16 +1,18 @@
-// adwebdev os: turns the portfolio page into a small operating system. The
-// page is complete without this script; here we add the boot screen, windows
-// that open, focus, drag and close, the clock, sound, and a terminal.
+// adwebdev os: turns the portfolio page into a small desktop on a CRT. The
+// page is complete without this script; here we add the boot, windows that
+// open, focus, drag, minimise, zoom and close, files and folders, the dock,
+// a browser for the posts, mail, a terminal, a screensaver and the clock.
 (() => {
   const root = document.documentElement;
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const coarse = () => matchMedia("(pointer: coarse)").matches;
   const phone = () => matchMedia("(max-width: 720px)").matches;
   const store = {
     get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
     set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
   };
 
-  // ---- Sound: short square-wave blips, off unless the visitor turns it on.
+  // ---- Sound: short blips, off unless the visitor turns it on.
   let audio = null;
   let soundOn = store.get("os.sound") === "on";
   function blip(freq = 880, ms = 40, gain = 0.03) {
@@ -26,7 +28,7 @@
     o.stop(audio.currentTime + ms / 1000);
   }
 
-  // ---- Menu bar: clock (Brussels time), CRT and sound switches.
+  // ---- Menu bar: the clock (Brussels time) and the CRT and sound switches.
   function clock() {
     const t = document.querySelector("[data-clock]");
     if (!t) return;
@@ -37,16 +39,19 @@
   }
   function switches() {
     const crt = document.querySelector('[data-toggle="crt"]');
-    const snd = document.querySelector('[data-toggle="sound"]');
-    const crtOn = store.get("os.crt") !== "off";
-    root.classList.toggle("no-crt", !crtOn);
-    crt?.setAttribute("aria-pressed", crtOn);
-    snd?.setAttribute("aria-pressed", soundOn);
+    const setCrt = (on) => {
+      root.classList.toggle("no-crt", !on);
+      crt?.setAttribute("aria-pressed", on);
+    };
+    setCrt(store.get("os.crt") !== "off");
     crt?.addEventListener("click", () => {
-      const on = root.classList.toggle("no-crt");
-      crt.setAttribute("aria-pressed", !on);
-      store.set("os.crt", on ? "off" : "on");
+      const on = root.classList.contains("no-crt");
+      setCrt(on);
+      store.set("os.crt", on ? "on" : "off");
+      blip(on ? 990 : 330, 50);
     });
+    const snd = document.querySelector('[data-toggle="sound"]');
+    snd?.setAttribute("aria-pressed", soundOn);
     snd?.addEventListener("click", () => {
       soundOn = !soundOn;
       snd.setAttribute("aria-pressed", soundOn);
@@ -55,7 +60,7 @@
     });
   }
 
-  // ---- Boot screen: once per visit, skippable, instant with reduced motion.
+  // ---- Boot: once per visit, skippable, instant with reduced motion.
   function boot(done) {
     const screen = document.querySelector("[data-boot]");
     let seen = false;
@@ -97,26 +102,13 @@
     screen.addEventListener("click", leave, { once: true });
   }
 
-  // ---- File names on the desktop type themselves in.
-  function typeNames() {
-    if (reduced) return;
-    document.querySelectorAll("[data-type]").forEach((el, n) => {
-      const text = el.textContent;
-      el.textContent = "";
-      let i = 0;
-      setTimeout(() => {
-        const t = setInterval(() => {
-          el.textContent = text.slice(0, ++i);
-          if (i >= text.length) clearInterval(t);
-        }, 35);
-      }, 150 + n * 90);
-    });
-  }
-
   // ---- Windows
   const windows = new Map();
   let z = 10;
   let cascade = 0;
+
+  const visible = () => [...windows.values()].filter((w) => !w.hidden);
+  const topWindow = () => visible().sort((a, b) => b.style.zIndex - a.style.zIndex)[0];
 
   function front(win) {
     windows.forEach((w) => w.classList.remove("is-front"));
@@ -124,69 +116,91 @@
     win.style.zIndex = ++z;
   }
 
+  function settle() {
+    const top = topWindow();
+    if (top) front(top);
+    dockState();
+  }
+
   function place(win) {
     if (phone() || win.dataset.placed) return;
-    const desk = document.querySelector("[data-desktop]").getBoundingClientRect();
     const w = win.offsetWidth;
-    const left = Math.max(16, Math.min((innerWidth - w) / 2 + cascade * 28 - 60, innerWidth - w - 16));
-    const top = Math.max(16, 70 + cascade * 28) + scrollY - desk.top - scrollY;
-    win.style.left = `${left}px`;
-    win.style.top = `${Math.max(16, top)}px`;
-    win.dataset.placed = "1";
+    const h = win.offsetHeight;
+    const room = innerHeight - parseFloat(getComputedStyle(root).fontSize) * 9;
+    const left = Math.min(innerWidth - w - 16, (innerWidth - w) / 2 - 100 + cascade * 36);
+    const top = Math.min(Math.max(16, room - h), 24 + cascade * 30);
     cascade = (cascade + 1) % 6;
+    win.style.left = `${Math.max(8, left)}px`;
+    win.style.top = `${Math.max(8, top)}px`;
+    win.dataset.placed = "1";
   }
 
   function open(id, { focus = true } = {}) {
     const win = windows.get(id);
     if (!win) return;
     const wasHidden = win.hidden;
+    delete win.dataset.min;
+    win.classList.remove("is-minimising");
     win.hidden = false;
     place(win);
     front(win);
-    document.querySelectorAll(`[data-open="${id}"]`).forEach((a) => a.setAttribute("aria-expanded", "true"));
-    if (wasHidden && !reduced) {
-      win.classList.remove("is-opening");
-      void win.offsetWidth;
-      win.classList.add("is-opening");
+    if (wasHidden) {
+      if (!reduced) {
+        win.classList.remove("is-opening");
+        void win.offsetWidth;
+        win.classList.add("is-opening");
+      }
+      launch(id);
+      blip(880, 40);
     }
-    if (wasHidden) blip(990, 35);
-    if (focus) win.focus({ preventScroll: true });
+    dockState();
+    if (focus) (win.querySelector("[data-focus-first]") || win).focus({ preventScroll: true });
     if (location.hash !== `#${id}`) history.replaceState(null, "", `#${id}`);
-    if (id === "terminal") win.querySelector("input")?.focus();
+    if (id === "terminal") win.querySelector(".terminal__line input")?.focus();
   }
 
   function close(win) {
     win.hidden = true;
-    win.classList.remove("is-front");
-    document.querySelectorAll(`[data-open="${win.id}"]`).forEach((a) => {
-      a.setAttribute("aria-expanded", "false");
-    });
-    blip(330, 40);
+    delete win.dataset.min;
+    win.classList.remove("is-front", "is-zoomed");
+    blip(440, 40);
     history.replaceState(null, "", location.pathname);
-    const opener = document.querySelector(`.volume[data-open="${win.id}"]`);
-    opener?.focus({ preventScroll: true });
+    settle();
+  }
+
+  function minimise(win) {
+    win.dataset.min = "1";
+    const done = () => {
+      win.hidden = true;
+      win.classList.remove("is-minimising", "is-front");
+      settle();
+    };
+    if (reduced) return done();
+    win.classList.add("is-minimising");
+    win.addEventListener("animationend", done, { once: true });
   }
 
   function drag(win) {
     const bar = win.querySelector("[data-drag]");
     bar?.addEventListener("pointerdown", (e) => {
-      if (phone() || e.target.closest("[data-close]")) return;
+      if (phone() || win.classList.contains("is-zoomed") || e.target.closest("a, button")) return;
       front(win);
       const sx = e.clientX - win.offsetLeft;
       const sy = e.clientY - win.offsetTop;
-      win.classList.add("is-dragging");
       bar.setPointerCapture(e.pointerId);
       const move = (ev) => {
-        win.style.left = `${Math.max(0, Math.min(ev.clientX - sx, innerWidth - 80))}px`;
+        win.style.left = `${Math.max(-win.offsetWidth + 80, Math.min(ev.clientX - sx, innerWidth - 80))}px`;
         win.style.top = `${Math.max(0, ev.clientY - sy)}px`;
       };
       const up = () => {
-        win.classList.remove("is-dragging");
         bar.removeEventListener("pointermove", move);
         bar.removeEventListener("pointerup", up);
       };
       bar.addEventListener("pointermove", move);
       bar.addEventListener("pointerup", up);
+    });
+    bar?.addEventListener("dblclick", (e) => {
+      if (!e.target.closest("a, button")) minimise(win);
     });
   }
 
@@ -197,33 +211,201 @@
       win.tabIndex = -1;
       win.setAttribute("role", "dialog");
       win.addEventListener("pointerdown", () => front(win));
-      win.querySelector("[data-close]")?.addEventListener("click", (e) => {
-        e.preventDefault();
-        close(win);
-      });
+      win.querySelector("[data-close]")?.addEventListener("click", (e) => { e.preventDefault(); close(win); });
+      win.querySelector("[data-min]")?.addEventListener("click", () => minimise(win));
+      win.querySelector("[data-zoom]")?.addEventListener("click", () => win.classList.toggle("is-zoomed"));
       drag(win);
     });
     document.querySelectorAll("[data-open]").forEach((a) => {
-      if (!windows.has(a.dataset.open)) return;
-      a.setAttribute("aria-expanded", "false");
+      if (!windows.has(a.dataset.open) || a.classList.contains("file")) return;
       a.addEventListener("click", (e) => {
-        if (!document.querySelector("[data-desktop]")) return;
         e.preventDefault();
-        open(a.dataset.open);
+        const id = a.dataset.open;
+        if (id === "browser") return browse();
+        open(id);
       });
     });
     addEventListener("keydown", (e) => {
-      if (e.key !== "Escape") return;
-      const top = [...windows.values()].filter((w) => !w.hidden).sort((a, b) => b.style.zIndex - a.style.zIndex)[0];
+      if (e.key !== "Escape" || e.target.closest?.("input, textarea")) return;
+      const top = topWindow();
       if (top) close(top);
     });
     const id = location.hash.slice(1);
     if (windows.has(id)) open(id, { focus: false });
   }
 
-  // ---- Screensaver: the logo bouncing off the edges of an idle desktop.
-  // Only when no window is open, so it never interrupts someone reading, and
-  // never on touch screens or with reduced motion.
+  // ---- Files and folders: one click selects, a double click (or Enter, or a
+  // tap on a touch screen) opens, as in the Finder.
+  function activate(a) {
+    if (a.dataset.open) return open(a.dataset.open);
+    if (a.dataset.kind === "browser") return browse(a.href);
+    if (a.dataset.kind === "info") return open(a.dataset.info);
+  }
+  function files() {
+    const all = [...document.querySelectorAll(".file")];
+    const select = (a) => {
+      all.forEach((f) => f.classList.toggle("is-selected", f === a));
+    };
+    all.forEach((a) => {
+      a.addEventListener("click", (e) => {
+        e.preventDefault();
+        if (coarse()) return activate(a);
+        select(a);
+      });
+      a.addEventListener("dblclick", (e) => { e.preventDefault(); activate(a); });
+      a.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") { e.preventDefault(); select(a); activate(a); }
+      });
+    });
+    document.querySelector("[data-desktop]")?.addEventListener("pointerdown", (e) => {
+      if (!e.target.closest(".file, .window")) select(null);
+    });
+  }
+
+  // ---- The dock: running triangles, a bounce on launch, magnification.
+  function dockState() {
+    document.querySelectorAll(".dock__item[data-open]").forEach((d) => {
+      const w = windows.get(d.dataset.open);
+      d.classList.toggle("is-running", !!w && (!w.hidden || !!w.dataset.min));
+    });
+  }
+  function launch(id) {
+    if (reduced) return;
+    document.querySelectorAll(`.dock__item[data-open="${id}"]`).forEach((d) => {
+      d.classList.remove("is-launching");
+      void d.offsetWidth;
+      d.classList.add("is-launching");
+      d.addEventListener("animationend", () => d.classList.remove("is-launching"), { once: true });
+    });
+  }
+  function dockUp() {
+    const shelf = document.querySelector(".dock__shelf");
+    const items = [...document.querySelectorAll(".dock__item")];
+    if (!shelf || reduced) return;
+    shelf.addEventListener("pointermove", (e) => {
+      if (coarse() || phone()) return;
+      for (const it of items) {
+        const r = it.getBoundingClientRect();
+        const d = Math.abs(e.clientX - (r.left + r.width / 2));
+        it.style.setProperty("--mag", (1 + 0.55 * Math.max(0, 1 - d / 150)).toFixed(3));
+      }
+    });
+    shelf.addEventListener("pointerleave", () => items.forEach((it) => it.style.removeProperty("--mag")));
+  }
+
+  // ---- Browser: its own history, an address bar, and posts as web pages.
+  // Other sites mostly refuse to be framed, so their links open in a real tab.
+  const nav = { list: [], at: -1 };
+  let browser = null;
+  function browse(url) {
+    if (!browser) return;
+    open("browser");
+    if (!url) {
+      if (nav.at >= 0) return;
+      url = browser.home;
+    }
+    nav.list = nav.list.slice(0, nav.at + 1);
+    nav.list.push(url);
+    nav.at = nav.list.length - 1;
+    browser.load(url);
+  }
+  function browserUp() {
+    const win = document.getElementById("browser");
+    if (!win) return;
+    let frame = win.querySelector("[data-frame]");
+    const address = win.querySelector("[data-address]");
+    const back = win.querySelector("[data-back]");
+    const forward = win.querySelector("[data-forward]");
+    const external = win.querySelector("[data-external]");
+    const title = win.querySelector(".window__title");
+    const home = win.querySelector("[data-browser-home]")?.href || "/";
+    const buttons = () => {
+      back.disabled = nav.at <= 0;
+      forward.disabled = nav.at >= nav.list.length - 1;
+    };
+    const show = (url, name) => {
+      address.value = url;
+      external.href = url;
+      title.textContent = name || "browser";
+      buttons();
+    };
+    // A frame that shows another site can be refused the way back to this
+    // one, so it is swapped for a fresh frame first.
+    const foreign = () => {
+      try { return !frame.contentWindow.location.href; } catch { return true; }
+    };
+    browser = {
+      home,
+      load(url) {
+        show(url, "Loading…");
+        if (foreign()) {
+          const fresh = frame.cloneNode(false);
+          fresh.removeAttribute("src");
+          fresh.addEventListener("load", loaded);
+          frame.replaceWith(fresh);
+          frame = fresh;
+        }
+        frame.src = url;
+      },
+    };
+    function loaded() {
+      let url = nav.list[nav.at] || "";
+      let name = "";
+      try {
+        const doc = frame.contentDocument;
+        url = frame.contentWindow.location.href;
+        if (url === "about:blank") return;
+        name = doc.title;
+        if (url !== nav.list[nav.at]) {
+          nav.list = nav.list.slice(0, nav.at + 1);
+          nav.list.push(url);
+          nav.at = nav.list.length - 1;
+        }
+        doc.addEventListener("click", (e) => {
+          const a = e.target.closest?.("a[href]");
+          if (!a || a.target === "_top") return;
+          if (new URL(a.href, url).origin !== location.origin) {
+            e.preventDefault();
+            window.open(a.href, "_blank", "noopener");
+          }
+        });
+      } catch {
+        name = new URL(url, location.href).hostname;
+      }
+      show(url, name);
+    }
+    frame.addEventListener("load", loaded);
+    back.addEventListener("click", () => { if (nav.at > 0) browser.load(nav.list[--nav.at]); });
+    forward.addEventListener("click", () => { if (nav.at < nav.list.length - 1) browser.load(nav.list[++nav.at]); });
+    win.querySelector("[data-reload]").addEventListener("click", () => {
+      try { frame.contentWindow.location.reload(); } catch { frame.src = frame.src; }
+    });
+    win.querySelector("[data-go]").addEventListener("submit", (e) => {
+      e.preventDefault();
+      let v = address.value.trim();
+      if (!v) return;
+      if (!/^[a-z]+:/i.test(v) && !v.startsWith("/") && /\.[a-z]{2,}/i.test(v)) v = `https://${v}`;
+      const u = new URL(v, location.href);
+      if (u.origin === location.origin) browse(u.href);
+      else window.open(u.href, "_blank", "noopener");
+    });
+    buttons();
+  }
+
+  // ---- Mail: send through the visitor's own mail app.
+  function compose() {
+    const form = document.querySelector("[data-compose]");
+    form?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const subject = form.querySelector('[name="subject"]').value;
+      const body = form.querySelector('[name="body"]').value;
+      location.href = `mailto:${form.dataset.to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    });
+  }
+
+  // ---- Screensaver: the logo bouncing round an idle desktop. Only when
+  // no window is open, so it never interrupts reading,
+  // and never on touch screens or with reduced motion.
   let saver = null;
   function screensaver() {
     if (reduced || !matchMedia("(hover: hover) and (pointer: fine)").matches) return;
@@ -231,17 +413,17 @@
     if (!mark) return;
     mark.removeAttribute("role");
     mark.removeAttribute("aria-label");
-    const screen_ = document.createElement("div");
-    screen_.className = "saver";
-    screen_.hidden = true;
-    screen_.setAttribute("aria-hidden", "true");
+    const screen = document.createElement("div");
+    screen.className = "saver";
+    screen.hidden = true;
+    screen.setAttribute("aria-hidden", "true");
     const logo = document.createElement("div");
     logo.className = "saver__logo";
     logo.append(mark);
     const note = document.createElement("p");
     note.className = "saver__note";
-    screen_.append(logo, note);
-    document.body.append(screen_);
+    screen.append(logo, note);
+    document.body.append(screen);
 
     const IDLE_MS = 45000;
     let idle = 0;
@@ -252,7 +434,6 @@
     let vy = 115;
     let last = 0;
     let corners = 0;
-
     const frame = (t) => {
       const dt = Math.min((t - last) / 1000, 0.05);
       last = t;
@@ -275,13 +456,11 @@
       logo.style.transform = `translate(${x}px, ${y}px)`;
       raf = requestAnimationFrame(frame);
     };
-
-    const anyWindowOpen = () => [...windows.values()].some((w) => !w.hidden);
+    const reading = () => visible().length > 0;
     const booting = () => !!document.querySelector("[data-boot]:not([hidden])");
-
     const show = () => {
       if (booting()) return arm();
-      screen_.hidden = false;
+      screen.hidden = false;
       x = Math.random() * Math.max(1, innerWidth - logo.offsetWidth);
       y = Math.random() * Math.max(1, innerHeight - logo.offsetHeight);
       last = performance.now();
@@ -289,13 +468,13 @@
       raf = requestAnimationFrame(frame);
     };
     const hide = () => {
-      if (screen_.hidden) return;
+      if (screen.hidden) return;
       cancelAnimationFrame(raf);
-      screen_.hidden = true;
+      screen.hidden = true;
     };
     const arm = () => {
       clearTimeout(idle);
-      idle = setTimeout(() => (anyWindowOpen() ? arm() : show()), IDLE_MS);
+      idle = setTimeout(() => (reading() ? arm() : show()), IDLE_MS);
     };
     const wake = () => { hide(); arm(); };
     for (const ev of ["pointermove", "pointerdown", "keydown", "wheel", "scroll", "touchstart"]) {
@@ -310,6 +489,11 @@
   function terminal() {
     const term = document.querySelector("[data-terminal]");
     if (!term) return;
+    const line = document.createElement("form");
+    line.className = "terminal__line";
+    line.innerHTML = '<label for="term-in">$</label><input id="term-in" autocomplete="off" spellcheck="false" aria-label="Terminal command">';
+    term.append(line);
+    const input = line.querySelector("input");
     const say = (text, cls) => {
       const p = document.createElement("p");
       p.textContent = text;
@@ -317,14 +501,16 @@
       line.before(p);
       term.scrollTop = term.scrollHeight;
     };
-    const line = document.createElement("form");
-    line.className = "terminal__line";
-    line.innerHTML = '<label for="term-in">$</label><input id="term-in" autocomplete="off" spellcheck="false" aria-label="Terminal command">';
-    term.append(line);
-    const input = line.querySelector("input");
-    const files = [...windows.keys()].filter((k) => k !== "terminal");
     const book = document.querySelector(".menubar__book")?.href;
-    // neofetch: the logo beside a system readout whose facts are the CV.
+    // Everything `open` knows, by the names a visitor would type.
+    const targets = {
+      about: "profile", me: "profile", profile: "profile", services: "services",
+      experience: "experience", mail: "contact", contact: "contact", browser: "browser",
+      terminal: "terminal", projects: "projects", posts: "posts", writing: "posts",
+      adwebdev: "info-adwebdev", berth: "info-berth",
+    };
+    const statico = document.querySelector('.file[data-kind="browser"][href*="statico"]');
+
     const neofetch = () => {
       const box = document.createElement("div");
       box.className = "neofetch";
@@ -376,16 +562,16 @@
     };
     const commands = {
       help: () => "help, ls, open <name>, whoami, neofetch, book, date, screensaver, clear",
+      ls: () => "About Me  Services  Experience  Mail  Browser  Terminal  Projects/  Posts/",
+      whoami: () => "Adriano Dias. Freelance web developer, Brussels. Drupal, Laravel, static sites.",
       neofetch,
+      date: () => new Intl.DateTimeFormat("en-GB", { dateStyle: "full", timeStyle: "short", timeZone: "Europe/Brussels" }).format(new Date()),
+      book: () => { if (book) window.open(book, "_blank", "noopener"); return "Opening the booking page…"; },
       screensaver: () => {
         if (!saver) return "screensaver: not available here.";
         setTimeout(saver, 400);
         return "Starting the screensaver. Move or press anything to wake it.";
       },
-      ls: () => [...document.querySelectorAll(".volume__file")].map((f) => f.textContent || f.dataset.file).join("  "),
-      whoami: () => "Adriano Dias. Freelance web developer, Brussels. Drupal, Laravel, static sites.",
-      date: () => new Intl.DateTimeFormat("en-GB", { dateStyle: "full", timeStyle: "short", timeZone: "Europe/Brussels" }).format(new Date()),
-      book: () => { if (book) open_(book); return "Opening the booking page…"; },
       clear: () => {
         term.querySelectorAll(":scope > p, :scope > .neofetch").forEach((n) => n.remove());
         return null;
@@ -393,18 +579,18 @@
       sudo: () => "Nice try.",
       rm: () => "Everything here is in git. Nothing is lost.",
     };
-    const open_ = (url) => window.open(url, "_blank", "noopener");
     line.addEventListener("submit", (e) => {
       e.preventDefault();
       const raw = input.value.trim();
       input.value = "";
       if (!raw) return;
       say(`$ ${raw}`, "is-cmd");
-      const [cmd, arg = ""] = raw.split(/\s+/, 2);
+      const [cmd, ...rest] = raw.split(/\s+/);
       if (cmd === "open" || cmd === "cat") {
-        const name = arg.replace(/\..*$/, "");
-        if (files.includes(name)) { say(`Opening ${arg}…`); open(name); }
-        else say(`open: no such file: ${arg || "(nothing)"}. Try ls.`);
+        const name = rest.join(" ").toLowerCase().replace(/\/$/, "").replace(/\.app$/, "");
+        if (name === "statico" && statico) { say("Opening Statico…"); browse(statico.href); }
+        else if (targets[name]) { say(`Opening ${rest.join(" ")}…`); targets[name] === "browser" ? browse() : open(targets[name]); }
+        else say(`open: no such file: ${rest.join(" ") || "(nothing)"}. Try ls.`);
         return;
       }
       const out = commands[cmd] ? commands[cmd]() : `${cmd}: command not found. Try help.`;
@@ -413,7 +599,7 @@
     });
   }
 
-  // ---- 404: a kernel panic. Show which address failed; any key reboots.
+  // ---- 404: the restart curtain. Any key goes back to the desktop.
   function panic() {
     const page = document.querySelector("[data-panic]");
     if (!page) return false;
@@ -434,9 +620,14 @@
     if (panic()) return;
     if (!document.querySelector("[data-desktop]")) return;
     windowsUp();
+    files();
+    dockUp();
+    browserUp();
+    compose();
     screensaver();
     terminal();
-    boot(typeNames);
+    dockState();
+    boot(() => {});
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);

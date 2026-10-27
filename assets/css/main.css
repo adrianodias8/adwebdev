@@ -1,8 +1,9 @@
-/* Portfolio template for Statico: a personal operating system on a white-
-   phosphor CRT. Plain CSS, no build step. Without JavaScript every window is
-   an ordinary section of one readable page; assets/js/os.js turns them into
-   windows on a desktop. Fonts: VT323 (the machine) and Schibsted Grotesk
-   (everything you read), both SIL OFL, see assets/fonts/. */
+/* adwebdev: a small personal desktop on a white-phosphor CRT. Plain CSS, no
+   build step. Without JavaScript every window is an ordinary section of one
+   readable page; assets/js/os.js turns them into windows over the desktop,
+   with folders, a dock and a browser for the posts. Fonts: VT323 (the
+   machine) and Schibsted Grotesk (everything you read), both SIL OFL, see
+   assets/fonts/. */
 
 @font-face { font-family: "VT323"; src: url("/assets/fonts/VT323-normal-400.woff2") format("woff2"); font-weight: 400; font-display: swap; }
 @font-face { font-family: "Schibsted Grotesk"; src: url("/assets/fonts/SchibstedGrotesk-normal-400-900.woff2") format("woff2"); font-weight: 400 900; font-style: normal; font-display: swap; }
@@ -11,7 +12,7 @@
 :root {
     color-scheme: dark;
     /* A white-phosphor monochrome screen: warm neutral black glass, light
-       that is almost white, and the orange of the Statico logo for actions. */
+       that is almost white, and an orange for actions. */
     --glass: oklch(15.5% 0.004 95);
     --glass-2: oklch(19.5% 0.005 95);
     --phosphor: oklch(93% 0.012 95);
@@ -25,11 +26,13 @@
     --machine: "VT323", ui-monospace, "SF Mono", Menlo, monospace;
     --text: "Schibsted Grotesk", ui-sans-serif, system-ui, sans-serif;
     --bar: 2.6rem;
+    --dock: 5.5rem;
     --gutter: clamp(1rem, 3vw, 2.25rem);
     --ease: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 *, *::before, *::after { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; scrollbar-color: var(--line) var(--glass); }
 body {
     margin: 0;
@@ -49,15 +52,16 @@ p, li, dd { margin: 0; text-wrap: pretty; }
 a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.22em; text-decoration-color: var(--phosphor-dim); transition: color 140ms var(--ease), text-decoration-color 140ms var(--ease); }
 a:hover { text-decoration-color: currentColor; }
 :focus-visible { outline: 2px solid var(--signal); outline-offset: 2px; }
-button { font: inherit; color: inherit; }
-.skip { position: absolute; left: var(--gutter); top: -4rem; z-index: 60; padding: 0.5rem 1rem; background: var(--phosphor); color: var(--glass); }
+button, input, textarea { font: inherit; color: inherit; }
+.skip { position: absolute; left: var(--gutter); top: -4rem; z-index: 9950; padding: 0.5rem 1rem; background: var(--phosphor); color: var(--glass); }
 .skip:focus { top: 3rem; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.sprite { position: absolute; width: 0; height: 0; overflow: hidden; }
 
 /* ---- The CRT: scan lines and the curve of the glass, over everything. */
 
 .crt {
-    position: fixed; inset: 0; z-index: 50; pointer-events: none;
+    position: fixed; inset: 0; z-index: 9990; pointer-events: none;
     background:
         repeating-linear-gradient(to bottom, transparent 0 2px, oklch(0% 0 0 / 0.16) 2px 3px),
         radial-gradient(ellipse at center, transparent 58%, oklch(0% 0 0 / 0.5) 100%);
@@ -69,7 +73,7 @@ html.no-crt .crt { display: none; }
 /* ---- Menu bar */
 
 .menubar {
-    position: sticky; top: 0; z-index: 40;
+    position: sticky; top: 0; z-index: 9000;
     display: flex; align-items: center; gap: 1.25rem;
     height: var(--bar);
     padding-inline: var(--gutter);
@@ -98,7 +102,7 @@ html:not(.os) .menubar__clock { display: none; }
 /* ---- Boot screen (shown by os.js, once per visit) */
 
 .boot {
-    position: fixed; inset: 0; z-index: 45;
+    position: fixed; inset: 0; z-index: 9800;
     display: grid; place-content: center; gap: 1.5rem;
     padding: var(--gutter);
     background: var(--glass);
@@ -107,7 +111,6 @@ html:not(.os) .menubar__clock { display: none; }
     line-height: 1.25;
     cursor: pointer;
 }
-.boot[hidden] { display: none; }
 .boot__panel { width: min(36rem, 100%); border: 1px solid var(--phosphor-soft); padding: 1.75rem 1.75rem 1.4rem; display: grid; gap: 1rem; }
 .boot__logo { color: var(--phosphor); }
 .boot__logo svg { width: 100%; height: auto; }
@@ -123,30 +126,13 @@ html:not(.os) .menubar__clock { display: none; }
 .boot__enter.is-on { visibility: visible; }
 @keyframes blink { 50% { opacity: 0; } }
 
-/* ---- Desktop: the logo, the line, the action, and the volumes */
-
-.desktop { position: relative; padding: var(--gutter); }
-html.os .desktop {
-    display: grid;
-    grid-template-rows: 1fr auto;
-    min-height: calc(100vh - var(--bar));
-    min-height: calc(100dvh - var(--bar));
-}
-.hero {
-    display: grid; align-content: center; justify-items: center; gap: 1.75rem;
-    text-align: center;
-    padding-block: clamp(3rem, 8vh, 6rem);
-}
-.hero__logo { width: min(64rem, 92%); color: var(--phosphor); filter: drop-shadow(0 0 0.35rem oklch(93% 0.012 95 / 0.22)); }
-.hero__logo svg { width: 100%; height: auto; }
-.hero__line { max-width: 34ch; font-size: clamp(1.15rem, 1rem + 0.6vw, 1.45rem); line-height: 1.45; color: var(--phosphor-soft); }
-.hero__line strong { color: var(--phosphor); font-weight: 650; }
+/* ---- Actions */
 
 .book { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.9rem 1.5rem; }
-.window .book { justify-content: flex-start; margin-top: 1.5rem; }
+.window .book, .article__end .book { justify-content: flex-start; margin-top: 1.5rem; }
 .button {
     display: inline-flex; align-items: center; min-height: 3rem; padding: 0 1.3rem;
-    background: var(--signal); color: var(--on-signal);
+    background: var(--signal); color: var(--on-signal); border: 0; cursor: pointer;
     font-family: var(--machine); font-size: 1.45rem; letter-spacing: 0.02em;
     text-decoration: none;
     box-shadow: 0 0 0 1px var(--signal), 0 4px 0 -1px oklch(45% 0.12 45);
@@ -157,45 +143,89 @@ html.os .desktop {
 .text-action { color: var(--phosphor); font-weight: 600; text-decoration-color: var(--signal); text-decoration-thickness: 2px; }
 .text-action:hover { color: var(--signal-strong); }
 
-.volumes {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 1fr));
-    gap: 0.25rem 1rem;
-    padding: 1rem 0 0.25rem;
-    border-top: 1px solid var(--line);
+/* ---- The desktop: the company logo as the wallpaper, the line and the
+   action under it, and the folders down the right. */
+
+.desktop { position: relative; padding: var(--gutter); }
+.wallpaper {
+    display: grid; align-content: center; justify-items: center; gap: 1.75rem;
+    text-align: center;
+    padding-block: clamp(3rem, 8vh, 6rem);
 }
-html:not(.os) .volumes { margin-bottom: 3rem; }
-.volume { display: grid; grid-template-columns: auto 1fr; column-gap: 0.75rem; align-items: baseline; padding: 0.8rem 0.6rem; text-decoration: none; font-family: var(--machine); line-height: 1.1; }
-.volume__no { grid-row: span 2; color: var(--signal); font-size: 1.6rem; }
-.volume__file { color: var(--phosphor-dim); font-size: 1.2rem; min-height: 1.1em; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.volume__name { color: var(--phosphor); font-size: 1.9rem; }
-.volume:hover, .volume[aria-expanded="true"] { background: var(--phosphor); }
-.volume:hover *, .volume[aria-expanded="true"] * { color: var(--glass); }
+.wallpaper__logo { width: min(60rem, 92%); color: var(--phosphor); filter: drop-shadow(0 0 0.35rem oklch(93% 0.012 95 / 0.22)); }
+.wallpaper__logo svg { width: 100%; height: auto; }
+.wallpaper__line { max-width: 34ch; font-size: clamp(1.15rem, 1rem + 0.6vw, 1.45rem); line-height: 1.45; color: var(--phosphor-soft); }
+.wallpaper__line strong { color: var(--phosphor); font-weight: 650; }
+
+/* Files: on the desktop and in folders. One click selects, two open. */
+.file {
+    display: grid; justify-items: center; align-content: start; gap: 0.35rem;
+    width: 7rem; padding: 0.4rem 0.25rem;
+    color: var(--phosphor); text-decoration: none;
+    font-family: var(--machine); font-size: 1.3rem; line-height: 1.05; text-align: center;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+.file__icon { width: 3.5rem; height: 3.5rem; }
+.file__name { padding: 0.1rem 0.35rem; background: var(--glass); overflow-wrap: anywhere; }
+.file:hover .file__name { text-decoration: underline; text-decoration-color: var(--signal); text-underline-offset: 0.15em; }
+.file.is-selected .file__icon { color: var(--signal); }
+.file.is-selected .file__name { background: var(--phosphor); color: var(--glass); }
+.file:focus-visible { outline-offset: 0; }
+
+.desk-icons { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; justify-content: center; padding-bottom: 2rem; }
 
 /* ---- Windows. Without JS they are sections of the page. */
 
 .windows { display: grid; gap: 2.5rem; padding-bottom: 4rem; }
 .window { background: var(--glass-2); border: 1px solid var(--phosphor-soft); box-shadow: 6px 6px 0 oklch(0% 0 0 / 0.5); scroll-margin-top: calc(var(--bar) + 1rem); }
 .window__bar {
-    display: flex; align-items: center; gap: 0.75rem;
+    display: flex; align-items: center; gap: 0.6rem;
     min-height: 2.2rem; padding: 0.3rem 0.75rem;
     background: var(--phosphor); color: var(--glass);
     font-family: var(--machine); font-size: 1.35rem; line-height: 1;
     user-select: none;
 }
-.window__close { flex: none; width: 1rem; height: 1rem; border: 2px solid var(--glass); background: var(--phosphor); }
-.window__close:hover { background: var(--glass); }
-.window__file { flex: 1; text-align: center; padding-right: 1.75rem; }
+.window__box { flex: none; position: relative; width: 1rem; height: 1rem; padding: 0; border: 2px solid var(--glass); background: var(--phosphor); cursor: pointer; }
+.window__box:hover { background: var(--glass); }
+.window__min::after { content: ""; position: absolute; left: 2px; right: 2px; bottom: 2px; height: 2px; background: var(--glass); }
+.window__zoom::after { content: ""; position: absolute; left: 0; top: 0; width: 55%; height: 55%; border-right: 2px solid var(--glass); border-bottom: 2px solid var(--glass); }
+.window__box:hover::after { background: var(--phosphor); border-color: var(--phosphor); }
+.window__title { flex: 1; min-width: 0; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+html:not(.os) .window__min, html:not(.os) .window__zoom { display: none; }
 .window__body { padding: clamp(1.25rem, 3vw, 2rem); }
-.window h2, .window h1 { font-size: clamp(1.6rem, 1.3rem + 1vw, 2.2rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
-.window h1 { font-size: clamp(2rem, 1.4rem + 2vw, 3.2rem); }
+.window h2 { font-size: clamp(1.6rem, 1.3rem + 1vw, 2.2rem); font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.75rem; }
 .window h3 { font-size: 1.15rem; font-weight: 700; }
 .window__lead { color: var(--phosphor-soft); max-width: 56ch; margin-bottom: 1.5rem; }
 
-.config { margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 17rem), 1fr)); gap: 0 2rem; }
-.config__row { padding: 0.9rem 0; border-top: 1px dashed var(--line); }
-.config dt { font-family: var(--machine); font-size: 1.45rem; line-height: 1.1; color: var(--phosphor); }
-.config dd { margin: 0.25rem 0 0; color: var(--phosphor-soft); max-width: 40ch; }
+/* Folders: an icon view for projects, a list view for posts. */
+.folder__status { padding: 0.35rem 0.9rem; border-bottom: 1px dashed var(--line); font-family: var(--machine); font-size: 1.2rem; color: var(--phosphor-dim); }
+.icon-view { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(7rem, 1fr)); gap: 1rem 0.5rem; justify-items: center; }
+.icon-view .file__name { background: none; }
+.icon-view .file.is-selected .file__name { background: var(--phosphor); }
+
+.list-view { width: 100%; border-collapse: collapse; }
+.list-view th, .list-view td { padding: 0.75rem 0.6rem; text-align: left; vertical-align: top; border-top: 1px dashed var(--line); }
+.list-view thead th { border-top: 0; padding-block: 0 0.4rem; font-family: var(--machine); font-size: 1.2rem; font-weight: 400; color: var(--phosphor-dim); }
+.list-view tbody th { font-family: var(--machine); font-size: 1.45rem; font-weight: 400; line-height: 1.1; color: var(--phosphor); white-space: nowrap; }
+.list-view tbody td { color: var(--phosphor-soft); }
+.list-view__date, .list-view__kind { font-family: var(--machine); font-size: 1.25rem; white-space: nowrap; }
+.file--row { display: flex; align-items: center; gap: 0.6rem; width: auto; padding: 0; justify-items: start; text-align: left; font-family: var(--text); font-size: 1rem; font-weight: 650; line-height: 1.35; }
+.file--row .file__icon { flex: none; width: 1.5rem; height: 1.5rem; }
+.file--row .file__name { background: none; padding: 0; }
+.folder .list-view tbody tr:hover, .folder .list-view tbody tr:has(.is-selected) { background: var(--phosphor); }
+.folder .list-view tbody tr:hover *, .folder .list-view tbody tr:has(.is-selected) * { color: var(--glass); background: none; }
+
+/* Get Info: what a project is, and where it lives. */
+.info__head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.info__icon { flex: none; width: 4rem; height: 4rem; color: var(--phosphor); }
+.info__head h2 { margin: 0; }
+.info__kind { font-family: var(--machine); font-size: 1.3rem; color: var(--phosphor-dim); }
+.info__rows { margin: 0; }
+.info__rows div { display: grid; grid-template-columns: 6rem minmax(0, 1fr); gap: 1rem; padding: 0.8rem 0; border-top: 1px dashed var(--line); }
+.info__rows dt { font-family: var(--machine); font-size: 1.3rem; line-height: 1.2; color: var(--signal); }
+.info__rows dd { margin: 0; color: var(--phosphor-soft); max-width: 46ch; }
+.info__rows a { color: var(--phosphor); text-decoration-color: var(--signal); }
 
 .log { list-style: none; margin: 0; padding: 0; }
 .log__row { display: grid; grid-template-columns: 8.5rem minmax(0, 1fr); gap: 0.3rem 1.5rem; padding: 1.1rem 0; border-top: 1px dashed var(--line); }
@@ -203,22 +233,38 @@ html:not(.os) .volumes { margin-bottom: 3rem; }
 .log__company { color: var(--phosphor); font-weight: 550; margin-top: 0.15rem; }
 .log__about { color: var(--phosphor-soft); margin-top: 0.45rem; max-width: 62ch; }
 
-.project { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 1.5rem; align-items: center; }
-.project__image { border: 1px solid var(--line); }
-.project p { color: var(--phosphor-soft); margin: 0.5rem 0 1rem; }
-
-.files { list-style: none; margin: 0 0 1.25rem; padding: 0; }
-.file-row a { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.1rem 1.5rem; padding: 0.85rem 0.6rem; border-top: 1px dashed var(--line); text-decoration: none; }
-.file-row__name { font-weight: 650; }
-.file-row__about { grid-row: 2; color: var(--phosphor-soft); font-size: 0.95rem; }
-.file-row__date { grid-row: span 2; font-family: var(--machine); font-size: 1.3rem; color: var(--phosphor-dim); align-self: center; }
-.file-row a:hover { background: var(--phosphor); }
-.file-row a:hover * { color: var(--glass); }
-
 .profile { display: grid; grid-template-columns: minmax(0, 0.42fr) minmax(0, 0.58fr); gap: 1.5rem; align-items: start; }
 .profile__photo { filter: grayscale(1) contrast(1.05); border: 1px solid var(--line); }
 .profile p { color: var(--phosphor-soft); margin-bottom: 1rem; }
-.contact__elsewhere { margin-top: 1.5rem; font-family: var(--machine); font-size: 1.3rem; color: var(--phosphor-dim); }
+.profile .book { margin-top: 0.5rem; }
+.profile .profile__more { margin-top: 1.25rem; font-family: var(--machine); font-size: 1.3rem; color: var(--phosphor-dim); }
+
+/* Mail: a new message that goes out through the visitor's own mail app. */
+.compose { display: grid; }
+.compose__toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; padding: 0.75rem 1rem; border-bottom: 1px dashed var(--line); }
+.compose__toolbar .button { min-height: 2.5rem; font-size: 1.3rem; }
+.compose__field { display: grid; grid-template-columns: 6rem minmax(0, 1fr); align-items: center; border-bottom: 1px dashed var(--line); }
+.compose__field label { padding: 0.5rem 1rem; font-family: var(--machine); font-size: 1.3rem; color: var(--phosphor-dim); }
+.compose input, .compose textarea { min-width: 0; padding: 0.55rem 1rem 0.55rem 0; background: none; border: 0; color: var(--phosphor); }
+.compose input:focus-visible, .compose textarea:focus-visible { outline: none; background: var(--glass); }
+.compose input[readonly] { color: var(--phosphor-soft); }
+.compose textarea { padding: 1rem; resize: vertical; min-height: 12rem; line-height: 1.55; }
+.compose textarea::placeholder { color: var(--phosphor-dim); }
+
+/* Browser: posts open here as web pages. */
+.browser__toolbar { display: flex; align-items: center; gap: 0.4rem; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--line); }
+.tool { flex: none; display: grid; place-items: center; width: 2.25rem; height: 2.25rem; padding: 0; background: var(--glass); border: 1px solid var(--phosphor-soft); color: var(--phosphor); cursor: pointer; }
+.tool svg { width: 1rem; height: 1rem; }
+.tool:hover { background: var(--phosphor); color: var(--glass); }
+.tool:disabled { opacity: 0.4; cursor: default; background: var(--glass); color: var(--phosphor); }
+.browser__address { flex: 1; min-width: 0; }
+.browser__address input { width: 100%; height: 2.25rem; padding: 0 0.6rem; background: var(--glass); border: 1px solid var(--line); color: var(--phosphor); font-family: var(--machine); font-size: 1.3rem; }
+.browser__address input:focus-visible { outline: none; border-color: var(--signal); }
+.browser__frame { display: none; width: 100%; border: 0; background: var(--glass); }
+.browser__nojs { padding: 1.25rem; color: var(--phosphor-soft); }
+html:not(.os) .browser__toolbar { display: none; }
+html.os .browser__frame { display: block; flex: 1; min-height: 0; }
+html.os .browser__nojs { display: none; }
 
 .terminal { font-family: var(--machine); font-size: 1.35rem; line-height: 1.3; min-height: 16rem; color: var(--phosphor-soft); }
 .terminal p { white-space: pre-wrap; overflow-wrap: anywhere; }
@@ -228,62 +274,7 @@ html:not(.os) .volumes { margin-bottom: 3rem; }
 .terminal__line label { color: var(--signal); }
 .terminal__line input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--phosphor); font: inherit; caret-color: var(--signal); }
 
-/* ---- The OS, once os.js runs: windows float over the desktop. */
-
-html.os .windows { display: block; padding: 0; }
-html.os .window {
-    position: absolute; z-index: 10;
-    width: min(46rem, calc(100vw - 2 * var(--gutter)));
-    max-height: calc(100vh - var(--bar) - 2rem);
-    display: flex; flex-direction: column;
-}
-html.os .window--wide { width: min(58rem, calc(100vw - 2 * var(--gutter))); }
-html.os .window--terminal { width: min(40rem, calc(100vw - 2 * var(--gutter))); }
-html.os .window[hidden] { display: none; }
-html.os .window__body { overflow: auto; }
-html.os .window__bar { cursor: grab; }
-html.os .window.is-dragging .window__bar { cursor: grabbing; }
-html.os .window.is-opening { animation: power-on 260ms var(--ease) both; }
-@keyframes power-on {
-    0% { transform: scale(1, 0.01); filter: brightness(3); }
-    55% { transform: scale(1, 0.01); filter: brightness(3); clip-path: inset(0 30%); }
-    100% { transform: none; filter: none; clip-path: inset(0); }
-}
-html.os .window:focus { outline: none; }
-html.os .window.is-front { border-color: var(--phosphor); }
-
-/* ---- Inner pages: one window, maximised, in the page's flow. */
-html.os .window--page {
-    position: static; width: auto; max-height: none; display: block;
-}
-html.os .window--page .window__body { overflow: visible; }
-html.os .window--page .window__bar { cursor: default; }
-
-.page { padding: var(--gutter); }
-.window--page { max-width: 64rem; margin-inline: auto; }
-.window--reader { max-width: 52rem; }
-.reader__meta { font-family: var(--machine); font-size: 1.35rem; color: var(--phosphor-dim); margin: -0.25rem 0 1.75rem; }
-.page-section { margin-top: 3rem; }
-.profile--page { grid-template-columns: minmax(0, 0.38fr) minmax(0, 0.62fr); margin-top: 1rem; }
-.pager { display: flex; gap: 1.5rem; font-family: var(--machine); font-size: 1.3rem; }
-
-.prose { max-width: 37rem; }
-.prose > * + * { margin-top: 1.15em; }
-.prose h2 { font-size: 1.6rem; margin-top: 2em; }
-.prose h3 { font-size: 1.25rem; margin-top: 1.7em; }
-.prose h2 + *, .prose h3 + * { margin-top: 0.6em; }
-.prose > :first-child { margin-top: 0; }
-.prose a { text-decoration-color: var(--signal); }
-.prose ul, .prose ol { padding-left: 1.25em; }
-.prose img { border: 1px solid var(--line); }
-.prose blockquote { margin-inline: 0; padding-left: 1rem; border-left: 1px solid var(--phosphor-dim); color: var(--phosphor-soft); }
-.prose code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em; background: var(--glass); padding: 0.12em 0.32em; overflow-wrap: anywhere; }
-.prose pre { padding: 1rem 1.15rem; overflow-x: auto; font-size: 0.875rem; line-height: 1.55; border: 1px solid var(--line); }
-.prose pre code { background: none; padding: 0; }
-/* The highlight theme draws comments at 2.9:1; lift them to a readable 5:1. */
-pre span[style*="color:#747369"] { color: #a9a79c !important; }
-
-/* ---- neofetch: the logo beside a readout whose facts are the CV. */
+/* neofetch: the logo beside a readout whose facts are the CV. */
 .neofetch { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1.25rem; align-items: start; margin: 0.4rem 0 0.6rem; }
 .neofetch > svg { width: 100%; height: auto; color: var(--phosphor); margin-top: 0.4rem; }
 .neofetch dl { margin: 0; }
@@ -302,9 +293,95 @@ pre span[style*="color:#747369"] { color: #a9a79c !important; }
 .neofetch__swatches span:nth-child(5) { background: var(--phosphor); }
 .neofetch__swatches span:nth-child(6) { background: var(--signal); }
 
+/* ---- The dock. Without JS it is a row of links at the foot of the page. */
+
+.dock { padding: 1rem var(--gutter) 2rem; border-top: 1px solid var(--line); }
+.dock__shelf { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.5rem; }
+.dock__item { position: relative; display: grid; justify-items: center; gap: 0.3rem; text-decoration: none; color: var(--phosphor); -webkit-tap-highlight-color: transparent; }
+.dock__icon { display: block; width: 3.25rem; height: 3.25rem; color: var(--phosphor); }
+.dock__icon svg, .dock__icon img { width: 100%; height: 100%; }
+.dock__icon img { object-fit: cover; object-position: 50% 20%; filter: grayscale(1) contrast(1.05); border: 2px solid var(--phosphor); }
+.dock__label { font-family: var(--machine); font-size: 1.15rem; line-height: 1; white-space: nowrap; color: var(--phosphor-soft); }
+.dock__divider { align-self: stretch; width: 1px; margin-inline: 0.35rem; background: var(--line); }
+
+html.os .dock {
+    position: fixed; left: 50%; bottom: 0.6rem; z-index: 8500;
+    transform: translateX(-50%);
+    padding: 0; border: 0;
+}
+html.os .dock__shelf {
+    flex-wrap: nowrap; gap: 0.45rem;
+    padding: 0.45rem 0.7rem 0.75rem;
+    background: var(--glass);
+    border: 1px solid var(--phosphor-soft);
+    box-shadow: 6px 6px 0 oklch(0% 0 0 / 0.5);
+}
+html.os .dock__item { margin-inline: calc((var(--mag, 1) - 1) * 1.6rem); transition: margin 120ms var(--ease); }
+html.os .dock__icon { transform: scale(var(--mag, 1)); transform-origin: 50% 100%; transition: transform 120ms var(--ease); }
+html.os .dock__label {
+    position: absolute; left: 50%; bottom: calc(3.25rem * var(--mag, 1) + 0.9rem);
+    transform: translateX(-50%);
+    padding: 0.25rem 0.5rem; background: var(--phosphor); color: var(--glass);
+    font-size: 1.25rem;
+    opacity: 0; pointer-events: none; transition: opacity 100ms linear;
+}
+html.os .dock__item:hover .dock__label, html.os .dock__item:focus-visible .dock__label { opacity: 1; }
+/* A running app keeps a small orange block under its icon. */
+html.os .dock__item::after { content: ""; position: absolute; left: 50%; bottom: -0.55rem; width: 0.35rem; height: 0.35rem; transform: translateX(-50%); background: var(--signal); opacity: 0; }
+html.os .dock__item.is-running::after { opacity: 1; }
+html.os .dock__item.is-launching .dock__icon { animation: dock-bounce 700ms var(--ease); }
+@keyframes dock-bounce { 0%, 100% { translate: 0 0; } 25% { translate: 0 -1.1rem; } 50% { translate: 0 0; } 70% { translate: 0 -0.5rem; } }
+
+/* ---- The OS, once os.js runs: one screen, windows float over the desktop. */
+
+html.os body { overflow: hidden; }
+html.os .desktop {
+    height: calc(100vh - var(--bar));
+    height: calc(100dvh - var(--bar));
+    padding: 0;
+    overflow: hidden;
+}
+html.os .wallpaper {
+    position: absolute; inset: 0 0 var(--dock) 0;
+    padding: var(--gutter) calc(var(--gutter) + 8rem);
+}
+html.os .desk-icons {
+    position: absolute; top: 1rem; right: var(--gutter); z-index: 5;
+    flex-direction: column; padding: 0;
+}
+html.os .windows { display: block; padding: 0; }
+html.os .window {
+    position: absolute; z-index: 10;
+    width: min(46rem, calc(100vw - 2 * var(--gutter)));
+    max-height: calc(100dvh - var(--bar) - var(--dock) - 2rem);
+    display: flex; flex-direction: column;
+}
+html.os .window--doc { width: min(52rem, calc(100vw - 2 * var(--gutter))); }
+html.os .window--info { width: min(32rem, calc(100vw - 2 * var(--gutter))); }
+html.os .window--mail { width: min(38rem, calc(100vw - 2 * var(--gutter))); }
+html.os .window--terminal { width: min(40rem, calc(100vw - 2 * var(--gutter))); }
+html.os .window--browser { width: min(62rem, calc(100vw - 2 * var(--gutter))); height: calc(100dvh - var(--bar) - var(--dock) - 3rem); }
+html.os .window__body { overflow: auto; }
+html.os .window__bar { cursor: grab; }
+html.os .window:focus { outline: none; }
+html.os .window.is-front { border-color: var(--phosphor); }
+html.os .window:not(.is-front) .window__bar { background: var(--phosphor-dim); }
+html.os .window:not(.is-front) .window__box { background: var(--phosphor-dim); }
+html.os .window.is-zoomed {
+    left: 0.75rem !important; top: 0.75rem !important;
+    width: calc(100vw - 1.5rem); height: calc(100dvh - var(--bar) - var(--dock) - 1.5rem); max-height: none;
+}
+html.os .window.is-opening { animation: power-on 260ms var(--ease) both; }
+@keyframes power-on {
+    0% { transform: scale(1, 0.01); filter: brightness(3); }
+    55% { transform: scale(1, 0.01); filter: brightness(3); clip-path: inset(0 30%); }
+    100% { transform: none; filter: none; clip-path: inset(0); }
+}
+html.os .window.is-minimising { animation: minimise 260ms ease-in both; pointer-events: none; }
+@keyframes minimise { to { transform: translateY(60vh) scale(0.12); opacity: 0; } }
+
 /* ---- Screensaver: the logo bouncing round an idle desktop. */
-.saver { position: fixed; inset: 0; z-index: 48; background: var(--glass); cursor: none; }
-.saver[hidden] { display: none; }
+.saver { position: fixed; inset: 0; z-index: 9700; background: var(--glass); cursor: none; }
 .saver__logo { position: absolute; top: 0; left: 0; width: clamp(9rem, 16vw, 14rem); color: var(--phosphor); will-change: transform; transition: color 120ms linear; }
 .saver__logo.is-lit { color: var(--signal); }
 .saver__logo svg { width: 100%; height: auto; display: block; }
@@ -327,24 +404,95 @@ body:has(.panic) .menubar { display: none; }
 .panic__reboot a { color: var(--phosphor); text-decoration-color: var(--signal); text-decoration-thickness: 2px; }
 .panic__reboot a:hover { color: var(--signal-strong); }
 
-/* ---- Phones: no dragging; windows open as full sheets. */
+/* ---- Web pages: what the browser shows, and what a direct visit gets. */
+
+.web-header {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.25rem;
+    max-width: 46rem; margin: 0 auto; padding: 1.25rem 1.25rem 1rem;
+    border-bottom: 1px solid var(--line);
+    font-family: var(--machine); font-size: 1.35rem; line-height: 1;
+}
+.web-header__mark { width: 2.4rem; color: var(--phosphor); }
+.web-header__mark svg { width: 100%; height: auto; }
+.web-header__name { text-decoration: none; margin-right: auto; }
+.web-header__nav { display: flex; flex-wrap: wrap; gap: 1.1rem; }
+.web-header__nav a { color: var(--phosphor-soft); text-decoration: none; }
+.web-header__nav a:hover { color: var(--phosphor); }
+.web-header__nav .web-header__desk { color: var(--signal); }
+.in-browser .web-header__desk { display: none; }
+.web-main { max-width: 46rem; margin: 0 auto; padding: 2.5rem 1.25rem 3rem; }
+.article h1 { font-size: clamp(2rem, 1.5rem + 2vw, 2.9rem); font-weight: 750; letter-spacing: -0.02em; line-height: 1.08; }
+.article__meta { font-family: var(--machine); font-size: 1.35rem; color: var(--phosphor-dim); margin: 0.6rem 0 2rem; }
+.article__lead { color: var(--phosphor-soft); font-size: 1.2rem; margin: 0.8rem 0 1.75rem; max-width: 52ch; }
+.article__lead a { text-decoration-color: var(--signal); }
+.article__photo { max-width: 20rem; margin-bottom: 2rem; border: 1px solid var(--line); }
+.article .log { margin-top: 1rem; }
+.article__end { max-width: 46rem; margin: 0 auto; padding: 0 1.25rem 3rem; }
+.article__end h2 { font-size: 1.4rem; padding-top: 2rem; border-top: 1px dashed var(--line); }
+.post-list { list-style: none; margin: 0; padding: 0; }
+.post-list li { display: flex; justify-content: space-between; gap: 1.5rem; padding: 1rem 0.5rem; border-top: 1px dashed var(--line); }
+.post-list a { display: grid; gap: 0.2rem; text-decoration: none; }
+.post-list__title { font-weight: 700; font-size: 1.15rem; }
+.post-list__about { color: var(--phosphor-soft); }
+.post-list time { font-family: var(--machine); font-size: 1.3rem; color: var(--phosphor-dim); white-space: nowrap; }
+.post-list li:hover { background: var(--phosphor); }
+.post-list li:hover * { color: var(--glass); }
+.pager { display: flex; gap: 1.5rem; margin-top: 1.5rem; font-family: var(--machine); font-size: 1.3rem; }
+.web-footer { max-width: 46rem; margin: 0 auto; padding: 1.5rem 1.25rem 2.5rem; border-top: 1px solid var(--line); font-family: var(--machine); font-size: 1.25rem; color: var(--phosphor-dim); }
+
+.prose { max-width: 37rem; }
+.prose > * + * { margin-top: 1.15em; }
+.prose h2 { font-size: 1.6rem; margin-top: 2em; }
+.prose h3 { font-size: 1.25rem; margin-top: 1.7em; }
+.prose h2 + *, .prose h3 + * { margin-top: 0.6em; }
+.prose > :first-child { margin-top: 0; }
+.prose a { text-decoration-color: var(--signal); }
+.prose ul, .prose ol { padding-left: 1.25em; }
+.prose img { border: 1px solid var(--line); }
+.prose blockquote { margin-inline: 0; padding-left: 1rem; border-left: 1px solid var(--phosphor-dim); color: var(--phosphor-soft); }
+.prose code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.86em; background: var(--glass-2); padding: 0.12em 0.32em; overflow-wrap: anywhere; }
+.prose pre { padding: 1rem 1.15rem; overflow-x: auto; font-size: 0.875rem; line-height: 1.55; border: 1px solid var(--line); }
+.prose pre code { background: none; padding: 0; }
+/* The highlight theme draws comments at 2.9:1; lift them to a readable 5:1. */
+pre span[style*="color:#747369"] { color: #a9a79c !important; }
+
+/* ---- Phones: no dragging; the desktop scrolls, windows open as full
+   sheets between the menu bar and the dock, and the dock scrolls sideways. */
 
 @media (max-width: 720px) {
+    :root { --dock: 5.25rem; }
     .menubar { gap: 0.9rem; font-size: 1.2rem; }
     .menubar__menu, .menubar__status, .menubar__clock { display: none; }
-    .hero { min-height: 0; padding-block: 3rem 2.5rem; }
     .boot { padding: 1.5rem; font-size: 1rem; place-content: center stretch; }
     .boot__log li { white-space: normal; }
-    .hero__logo { width: 100%; }
-    .volumes { grid-template-columns: 1fr 1fr; }
-    .profile, .profile--page, .project { grid-template-columns: 1fr; }
+    .wallpaper { padding-block: 3rem 2rem; }
+    .wallpaper__logo { width: 100%; }
+    .profile { grid-template-columns: 1fr; }
     .log__row { grid-template-columns: 1fr; }
+    .list-view, .list-view tbody, .list-view tr, .list-view th, .list-view td { display: block; }
+    .list-view thead { display: none; }
+    .list-view tr { padding: 0.75rem 0; border-top: 1px dashed var(--line); }
+    .list-view th, .list-view td { border: 0; padding: 0.1rem 0.4rem; }
+    .list-view__kind { display: none !important; }
+    .post-list li { flex-direction: column; gap: 0.3rem; }
+
+    html.os body { overflow: auto; }
+    html.os .desktop { height: auto; min-height: calc(100dvh - var(--bar)); padding: var(--gutter) var(--gutter) calc(var(--dock) + 1.5rem); overflow: visible; }
+    html.os .wallpaper { position: static; padding: 2rem 0 2.5rem; }
+    html.os .desk-icons { position: static; flex-direction: row; justify-content: center; }
     html.os .desktop .window {
-        position: fixed; inset: var(--bar) 0 0 0; width: auto; max-height: none;
+        position: fixed; inset: var(--bar) 0 var(--dock) 0; width: auto; height: auto; max-height: none;
         left: 0 !important; top: var(--bar) !important; box-shadow: none; border-inline: 0;
     }
-    html.os .window__bar { cursor: default; height: 2.75rem; }
-    .window__close { width: 1.75rem; height: 1.75rem; }
+    html.os .window__bar { cursor: default; min-height: 2.75rem; }
+    html.os .window__zoom { display: none; }
+    .window__box { width: 1.6rem; height: 1.6rem; }
+    html.os .dock { left: 0; right: 0; bottom: 0; transform: none; }
+    html.os .dock__shelf { overflow-x: auto; border-inline: 0; border-bottom: 0; box-shadow: none; padding: 0.5rem 0.75rem 0.9rem; gap: 0.9rem; }
+    html.os .dock__item { margin: 0; }
+    html.os .dock__icon { width: 2.6rem; height: 2.6rem; transform: none; }
+    html.os .dock__label { position: static; transform: none; opacity: 1; background: none; color: var(--phosphor-soft); font-size: 1rem; padding: 0; }
+    html.os .dock__item::after { bottom: -0.5rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {

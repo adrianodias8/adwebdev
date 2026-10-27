@@ -1,10 +1,38 @@
 [
   {
+    "id": "statico",
     "name": "Statico",
+    "icon": "statico",
+    "kind": "Application",
     "about": "A static site generator I wrote in Rust. One binary, no Node: plain HTML and markdown in, fast static sites out. It builds this site.",
-    "url": "https://github.com/adrianodias8/statico",
-    "link": "Statico on GitHub",
-    "image": "/assets/images/statico.png",
-    "alt": "The Statico logo: three stacked bars on a dark rounded square, the middle one orange"
+    "url": "https://adrianodias8.github.io/statico/",
+    "open": "browser",
+    "link": "https://github.com/adrianodias8/statico",
+    "link_label": "Source on GitHub",
+    "status": "Released"
+  },
+  {
+    "id": "adwebdev",
+    "name": "adwebdev",
+    "icon": "adwebdev",
+    "kind": "Website",
+    "about": "This site: a small operating system in the browser, built with Statico. Plain HTML and CSS and one script, no frameworks.",
+    "url": "",
+    "open": "info",
+    "link": "https://github.com/adrianodias8/adwebdev",
+    "link_label": "Source on GitHub",
+    "status": "You're using it"
+  },
+  {
+    "id": "berth",
+    "name": "berth",
+    "icon": "berth",
+    "kind": "Application",
+    "about": "Docker and Linux virtual machines on Apple Silicon, straight onto Virtualization.framework. A free take on OrbStack.",
+    "url": "",
+    "open": "info",
+    "link": "",
+    "link_label": "",
+    "status": "In progress, not public yet"
   }
 ]

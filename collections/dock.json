@@ -1,0 +1,8 @@
+[
+  { "id": "profile", "name": "About Me", "icon": "photo" },
+  { "id": "services", "name": "Services", "icon": "gear" },
+  { "id": "experience", "name": "Experience", "icon": "document" },
+  { "id": "contact", "name": "Mail", "icon": "mail" },
+  { "id": "browser", "name": "Browser", "icon": "browser" },
+  { "id": "terminal", "name": "Terminal", "icon": "terminal" }
+]
