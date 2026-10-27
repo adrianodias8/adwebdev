@@ -403,6 +403,290 @@
     });
   }
 
+  // ---- Tools: small ports of tools.adwebdev.xyz. Each runs in its window,
+  // on this page, and sends nothing anywhere.
+  function copyButtons() {
+    document.querySelectorAll("[data-copy]").forEach((b) => {
+      b.addEventListener("click", async () => {
+        const text = b.closest(".app").querySelector(b.dataset.copy)?.textContent || "";
+        try {
+          await navigator.clipboard.writeText(text);
+          b.textContent = "Copied";
+        } catch {
+          b.textContent = "Select and copy";
+        }
+        blip(990, 30);
+        setTimeout(() => (b.textContent = "Copy"), 1400);
+      });
+    });
+  }
+
+  // A fair random index below n, without the bias of a plain modulo.
+  function randomBelow(n) {
+    const limit = Math.floor(0x100000000 / n) * n;
+    const buf = new Uint32Array(1);
+    do crypto.getRandomValues(buf); while (buf[0] >= limit);
+    return buf[0] % n;
+  }
+
+  function keygen() {
+    const box = document.querySelector("[data-keygen]");
+    if (!box || !window.crypto?.getRandomValues) return;
+    const sets = {
+      upper: "ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+      lower: "abcdefghijklmnopqrstuvwxyz",
+      digits: "0123456789",
+      symbols: "!#$%&*+-=?@^_~",
+    };
+    const out = box.querySelector("[data-pass]");
+    const len = box.querySelector("[data-len]");
+    const lenOut = box.querySelector("[data-len-out]");
+    const crack = box.querySelector("[data-crack]");
+    const checks = [...box.querySelectorAll("[data-set]")];
+    // How long a guess-everything attack at a trillion tries a second needs,
+    // on average, to find it.
+    const howLong = (bits) => {
+      const log10s = (bits - 1) * Math.log10(2) - 12;
+      const units = [["years", 31557600], ["days", 86400], ["hours", 3600], ["minutes", 60], ["seconds", 1]];
+      const years = log10s - Math.log10(31557600);
+      if (years > Math.log10(1.38e10)) return "longer than the universe has existed";
+      if (years > 6) return `about ${Math.round(10 ** (years - 6)).toLocaleString("en-GB")} million years`;
+      const secs = 10 ** log10s;
+      for (const [name, size] of units) if (secs >= size) return `about ${Math.round(secs / size).toLocaleString("en-GB")} ${name}`;
+      return "less than a second";
+    };
+    const make = () => {
+      const pool = checks.filter((c) => c.checked).map((c) => sets[c.dataset.set]).join("");
+      const n = Number(len.value);
+      let pass = "";
+      for (let i = 0; i < n; i++) pass += pool[randomBelow(pool.length)];
+      out.textContent = pass;
+      lenOut.textContent = n;
+      const bits = n * Math.log2(pool.length);
+      crack.textContent = `${Math.round(bits)} bits. At a trillion guesses a second, cracking it takes ${howLong(bits)}.`;
+    };
+    len.addEventListener("input", make);
+    checks.forEach((c) => c.addEventListener("change", () => {
+      if (!checks.some((x) => x.checked)) c.checked = true;
+      make();
+    }));
+    box.querySelector("[data-gen]").addEventListener("click", () => { make(); blip(660, 25); });
+    const uuid = box.querySelector("[data-uuid]");
+    const newUuid = () => (uuid.textContent = crypto.randomUUID?.() || "Needs a secure (https) page");
+    box.querySelector("[data-new-uuid]").addEventListener("click", () => { newUuid(); blip(660, 25); });
+    make();
+    newUuid();
+  }
+
+  function stopwatch() {
+    const box = document.querySelector("[data-stopwatch]");
+    if (!box) return;
+    const time = box.querySelector("[data-time]");
+    const startBtn = box.querySelector("[data-start]");
+    const lapBtn = box.querySelector("[data-lap]");
+    const resetBtn = box.querySelector("[data-reset]");
+    const laps = box.querySelector("[data-laps]");
+    let base = 0;
+    let since = 0;
+    let raf = 0;
+    let lastLap = 0;
+    const now = () => base + (since ? performance.now() - since : 0);
+    const fmt = (ms) => {
+      const cs = Math.floor(ms / 10) % 100;
+      const s = Math.floor(ms / 1000) % 60;
+      const m = Math.floor(ms / 60000) % 60;
+      const h = Math.floor(ms / 3600000);
+      const two = (n) => String(n).padStart(2, "0");
+      return `${h ? `${h}:` : ""}${two(m)}:${two(s)}.${two(cs)}`;
+    };
+    const tick = () => {
+      time.textContent = fmt(now());
+      raf = requestAnimationFrame(tick);
+    };
+    startBtn.addEventListener("click", () => {
+      if (since) {
+        base = now();
+        since = 0;
+        cancelAnimationFrame(raf);
+        time.textContent = fmt(base);
+        startBtn.textContent = "Start";
+        lapBtn.disabled = true;
+      } else {
+        since = performance.now();
+        tick();
+        startBtn.textContent = "Stop";
+        lapBtn.disabled = false;
+        resetBtn.disabled = false;
+      }
+      blip(since ? 880 : 440, 30);
+    });
+    lapBtn.addEventListener("click", () => {
+      const t = now();
+      const li = document.createElement("li");
+      li.innerHTML = `<span>Lap ${laps.children.length + 1}</span><span></span><span></span>`;
+      li.children[1].textContent = `+${fmt(t - lastLap)}`;
+      li.children[2].textContent = fmt(t);
+      laps.prepend(li);
+      lastLap = t;
+      blip(1046, 20);
+    });
+    resetBtn.addEventListener("click", () => {
+      cancelAnimationFrame(raf);
+      base = since = lastLap = 0;
+      time.textContent = fmt(0);
+      laps.replaceChildren();
+      startBtn.textContent = "Start";
+      lapBtn.disabled = resetBtn.disabled = true;
+    });
+  }
+
+  function chmod() {
+    const box = document.querySelector("[data-chmod]");
+    if (!box) return;
+    const boxes = [...box.querySelectorAll("[data-bit]")];
+    const octal = box.querySelector("[data-octal]");
+    const symbolic = box.querySelector("[data-symbolic]");
+    const cmd = box.querySelector("[data-cmd]");
+    const note = box.querySelector("[data-chmod-note]");
+    const notes = {
+      "777": "Everyone can do everything. Almost never what you want on a server.",
+      "755": "The usual for folders and scripts: you change them, everyone can read and run them.",
+      "644": "The usual for files: you change them, everyone can read them.",
+      "600": "Only you can read or change it. Good for keys and .env files.",
+      "400": "Read-only, and only for you. SSH likes its private keys like this.",
+      "444": "Read-only for everyone. Drupal sets settings.php like this.",
+    };
+    const show = (digits) => {
+      symbolic.textContent = digits.map((d) => `${d & 4 ? "r" : "-"}${d & 2 ? "w" : "-"}${d & 1 ? "x" : "-"}`).join("");
+      cmd.textContent = `chmod ${digits.join("")} file`;
+      note.textContent = notes[digits.join("")] || "";
+    };
+    const fromBoxes = () => {
+      const digits = [0, 0, 0];
+      boxes.forEach((b) => { if (b.checked) digits[b.dataset.who] += Number(b.dataset.bit); });
+      octal.value = digits.join("");
+      show(digits);
+    };
+    const fromOctal = () => {
+      if (!/^[0-7]{3}$/.test(octal.value)) return;
+      const digits = [...octal.value].map(Number);
+      boxes.forEach((b) => (b.checked = (digits[b.dataset.who] & b.dataset.bit) > 0));
+      show(digits);
+    };
+    boxes.forEach((b) => b.addEventListener("change", fromBoxes));
+    octal.addEventListener("input", fromOctal);
+    fromOctal();
+  }
+
+  function statusCodes() {
+    const box = document.querySelector("[data-status]");
+    if (!box) return;
+    const rows = [...box.querySelectorAll("[data-code]")];
+    const input = box.querySelector("[data-status-in]");
+    const code = box.querySelector("[data-status-code]");
+    const name = box.querySelector("[data-status-name]");
+    const about = box.querySelector("[data-status-about]");
+    const show = (row) => {
+      code.textContent = row.dataset.code;
+      name.textContent = row.dataset.name;
+      about.textContent = row.dataset.about;
+    };
+    const look = () => {
+      const v = input.value.trim();
+      const row = rows.find((r) => r.dataset.code === v);
+      if (row) return show(row);
+      code.textContent = v || "…";
+      name.textContent = v.length === 3 ? "Not one I know" : "";
+      about.textContent = v.length === 3 ? "Try 404, 418 or 419." : "";
+    };
+    input.addEventListener("input", look);
+    box.querySelector("[data-status-form]").addEventListener("submit", (e) => e.preventDefault());
+    box.querySelector("[data-status-random]").addEventListener("click", () => {
+      const row = rows[randomBelow(rows.length)];
+      input.value = row.dataset.code;
+      show(row);
+      blip(row.dataset.code[0] === "2" ? 880 : row.dataset.code[0] >= "4" ? 220 : 520, 40);
+    });
+    rows.forEach((r) => r.addEventListener("click", () => { input.value = r.dataset.code; show(r); }));
+    look();
+  }
+
+  function keycode() {
+    const box = document.querySelector("[data-keycode]");
+    if (!box) return;
+    const pad = box.querySelector("[data-keypad]");
+    const big = box.querySelector("[data-key-big]");
+    const field = (k) => box.querySelector(`[data-k="${k}"]`);
+    const where = ["Standard", "Left", "Right", "Numpad"];
+    pad.addEventListener("keydown", (e) => {
+      if (e.key === "Tab") return;
+      e.preventDefault();
+      e.stopPropagation();
+      big.textContent = e.key === " " ? "Space" : e.key;
+      field("key").textContent = JSON.stringify(e.key);
+      field("code").textContent = e.code || "–";
+      field("keyCode").textContent = e.keyCode;
+      field("location").textContent = `${e.location} (${where[e.location] || "?"})`;
+      field("mods").textContent = ["Meta", "Control", "Alt", "Shift"].filter((m) => e.getModifierState(m)).join(" + ") || "none";
+      pad.textContent = "Press another";
+      blip(520 + (e.keyCode % 40) * 12, 20);
+    });
+    pad.addEventListener("blur", () => (pad.textContent = "Click here, then press any key"));
+  }
+
+  function radio() {
+    const box = document.querySelector("[data-radio]");
+    if (!box) return;
+    const words = "Alfa Bravo Charlie Delta Echo Foxtrot Golf Hotel India Juliett Kilo Lima Mike November Oscar Papa Quebec Romeo Sierra Tango Uniform Victor Whiskey X-ray Yankee Zulu".split(" ");
+    const digits = "Zero One Two Three Four Five Six Seven Eight Niner".split(" ");
+    const marks = { "@": "At", ".": "Dot", "-": "Dash", "_": "Underscore", "/": "Slash", ":": "Colon" };
+    const input = box.querySelector("[data-radio-in]");
+    const out = box.querySelector("[data-radio-out]");
+    const speak = box.querySelector("[data-speak]");
+    const spell = () => {
+      out.replaceChildren();
+      for (const ch of input.value) {
+        const lower = ch.toLowerCase();
+        let word = null;
+        if (lower >= "a" && lower <= "z") word = words[lower.charCodeAt(0) - 97];
+        else if (ch >= "0" && ch <= "9") word = digits[ch];
+        else if (marks[ch]) word = marks[ch];
+        else if (ch === " ") word = "(space)";
+        else word = ch;
+        const w = document.createElement("span");
+        w.className = "radio__word";
+        if (/[a-z0-9]/i.test(ch)) {
+          const first = document.createElement("b");
+          first.textContent = word[0];
+          w.append(first, word.slice(1));
+        } else w.textContent = word;
+        out.append(w, " ");
+      }
+    };
+    input.addEventListener("input", spell);
+    if ("speechSynthesis" in window) {
+      speak.hidden = false;
+      speak.addEventListener("click", () => {
+        speechSynthesis.cancel();
+        const say = new SpeechSynthesisUtterance(out.textContent.replace(/\(space\)/g, ",").replace(/\s+/g, ", "));
+        say.lang = "en-GB";
+        say.rate = 0.95;
+        speechSynthesis.speak(say);
+      });
+    }
+    spell();
+  }
+
+  function tools() {
+    copyButtons();
+    keygen();
+    stopwatch();
+    chmod();
+    statusCodes();
+    keycode();
+    radio();
+  }
+
   // ---- Screensaver: the logo bouncing round an idle desktop. Only when
   // no window is open, so it never interrupts reading,
   // and never on touch screens or with reduced motion.
@@ -507,7 +791,10 @@
       about: "profile", me: "profile", profile: "profile", services: "services",
       experience: "experience", mail: "contact", contact: "contact", browser: "browser",
       terminal: "terminal", projects: "projects", posts: "posts", writing: "posts",
-      adwebdev: "info-adwebdev", berth: "info-berth",
+      adwebdev: "info-adwebdev", berth: "info-berth", tools: "tools",
+      keygen: "tool-keygen", stopwatch: "tool-stopwatch", chmod: "tool-chmod",
+      status: "tool-status", http: "tool-status", keycode: "tool-keycode",
+      radio: "tool-radio", nato: "tool-radio",
     };
     const statico = document.querySelector('.file[data-kind="browser"][href*="statico"]');
 
@@ -561,8 +848,9 @@
       return null;
     };
     const commands = {
-      help: () => "help, ls, open <name>, whoami, neofetch, book, date, screensaver, clear",
-      ls: () => "About Me  Services  Experience  Mail  Browser  Terminal  Projects/  Posts/",
+      help: () => "help, ls, open <name>, whoami, neofetch, uuid, book, date, screensaver, clear",
+      ls: () => "About Me  Services  Experience  Mail  Browser  Terminal  Projects/  Posts/  Tools/",
+      uuid: () => crypto.randomUUID?.() || "uuid: needs a secure (https) page.",
       whoami: () => "Adriano Dias. Freelance web developer, Brussels. Drupal, Laravel, static sites.",
       neofetch,
       date: () => new Intl.DateTimeFormat("en-GB", { dateStyle: "full", timeStyle: "short", timeZone: "Europe/Brussels" }).format(new Date()),
@@ -624,6 +912,7 @@
     dockUp();
     browserUp();
     compose();
+    tools();
     screensaver();
     terminal();
     dockState();

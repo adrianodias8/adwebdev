@@ -31,6 +31,7 @@
     <nav class="desk-icons" aria-label="Desktop">
         <a class="file desk-icon" href="/#projects" data-open="projects"><svg class="file__icon"><use href="#i-folder"/></svg><span class="file__name">Projects</span></a>
         <a class="file desk-icon" href="/writing/" data-open="posts"><svg class="file__icon"><use href="#i-folder"/></svg><span class="file__name">Posts</span></a>
+        <a class="file desk-icon" href="/#tools" data-open="tools"><svg class="file__icon"><use href="#i-folder"/></svg><span class="file__name">Tools</span></a>
     </nav>
 
     <div class="windows">
@@ -86,6 +87,22 @@
             </table>
         </div>
     </section>
+
+    <section class="window window--folder" id="tools" data-window aria-labelledby="tools-title">
+        <include src="window-bar.html" title="tools/" close="#main" />
+        <p class="folder__status">7 items · double-click to open</p>
+        <div class="window__body folder">
+            <h2 id="tools-title" class="visually-hidden">Tools</h2>
+            <ul class="icon-view">
+                <ForEach collection="tools" as="t">
+                <li><a class="file" href="#tool-{t.id}" data-file data-open="tool-{t.id}"><svg class="file__icon"><use href="#i-{t.icon}"/></svg><span class="file__name">{t.name}</span></a></li>
+                </ForEach>
+                <li><a class="file" href="https://tools.adwebdev.xyz/" data-file data-kind="browser"><svg class="file__icon"><use href="#i-more"/></svg><span class="file__name">More tools</span></a></li>
+            </ul>
+        </div>
+    </section>
+
+    <include src="tools.html" />
 
     <section class="window window--doc" id="profile" data-window aria-labelledby="profile-title">
         <include src="window-bar.html" title="profile.sys" close="#main" />
@@ -173,6 +190,7 @@
         <li class="dock__divider" aria-hidden="true"></li>
         <li><a class="dock__item" href="/#projects" data-open="projects"><span class="dock__icon"><svg><use href="#i-folder"/></svg></span><span class="dock__label">Projects</span></a></li>
         <li><a class="dock__item" href="/writing/" data-open="posts"><span class="dock__icon"><svg><use href="#i-folder"/></svg></span><span class="dock__label">Posts</span></a></li>
+        <li><a class="dock__item" href="/#tools" data-open="tools"><span class="dock__icon"><svg><use href="#i-folder"/></svg></span><span class="dock__label">Tools</span></a></li>
     </ul>
 </nav>
 

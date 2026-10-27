@@ -3,7 +3,7 @@
 My site: [adrianodias8.github.io/adwebdev](https://adrianodias8.github.io/adwebdev/)
 
 It is a small operating system. It boots, then opens on a desktop with the
-logo as its wallpaper, a Projects and a Posts folder, and a dock of apps:
+logo as its wallpaper, a Projects, a Posts and a Tools folder, and a dock of apps:
 windows open, drag, stack, minimise to the dock, zoom and close; posts open
 as web pages in a built-in browser; and the terminal works. Without
 JavaScript it is one ordinary readable page, and reduced motion skips the
@@ -33,6 +33,8 @@ Pushing to `main` checks, builds and deploys it. See
 | Projects (what opens in the browser, what opens an info window) | `collections/projects.json` |
 | The dock's apps | `collections/dock.json` |
 | Icons | `includes/icons.html` |
+| The Tools folder and its apps (ports of tools.adwebdev.xyz) | `collections/tools.json`, `includes/tools.html` |
+| HTTP status codes | `collections/http_status.json` |
 | Posts | `content/writing/*.md` |
 | The boot log and window contents | `pages/index.html` |
 | Bio | `pages/about.html` |

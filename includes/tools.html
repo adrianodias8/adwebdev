@@ -1,0 +1,139 @@
+<section class="window window--tool" id="tool-keygen" data-window aria-labelledby="keygen-title">
+    <include src="window-bar.html" title="keygen" close="#main" />
+    <div class="window__body app" data-keygen>
+        <h2 id="keygen-title">Keygen</h2>
+        <p class="window__lead">Passwords and UUIDs, made by your own browser's random numbers. Nothing leaves this page.</p>
+        <p class="tool__nojs">This tool needs JavaScript. <a href="https://tools.adwebdev.xyz/token-generator">Use the token generator on tools.adwebdev.xyz</a>.</p>
+        <div class="tool__ui">
+            <h3 id="keygen-pass">Password</h3>
+            <output class="tool__out" data-pass aria-labelledby="keygen-pass"></output>
+            <div class="tool__row">
+                <label class="tool__label" for="keygen-len">Length</label>
+                <input id="keygen-len" type="range" min="8" max="64" value="24" data-len>
+                <output class="tool__value" for="keygen-len" data-len-out>24</output>
+            </div>
+            <fieldset class="tool__checks">
+                <legend class="visually-hidden">Characters to use</legend>
+                <label><input type="checkbox" data-set="upper" checked> A–Z</label>
+                <label><input type="checkbox" data-set="lower" checked> a–z</label>
+                <label><input type="checkbox" data-set="digits" checked> 0–9</label>
+                <label><input type="checkbox" data-set="symbols" checked> !#$%</label>
+            </fieldset>
+            <p class="tool__note" data-crack></p>
+            <div class="tool__row">
+                <button class="button button--small" type="button" data-gen>Generate</button>
+                <button class="ghost" type="button" data-copy="[data-pass]">Copy</button>
+            </div>
+            <h3 id="keygen-uuid">UUID</h3>
+            <output class="tool__out" data-uuid aria-labelledby="keygen-uuid"></output>
+            <div class="tool__row">
+                <button class="button button--small" type="button" data-new-uuid>New UUID</button>
+                <button class="ghost" type="button" data-copy="[data-uuid]">Copy</button>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="window window--tool" id="tool-stopwatch" data-window aria-labelledby="stopwatch-title">
+    <include src="window-bar.html" title="stopwatch" close="#main" />
+    <div class="window__body app" data-stopwatch>
+        <h2 id="stopwatch-title" class="visually-hidden">Stopwatch</h2>
+        <p class="tool__nojs">This tool needs JavaScript. <a href="https://tools.adwebdev.xyz/chronometer">Use the chronometer on tools.adwebdev.xyz</a>.</p>
+        <div class="tool__ui">
+            <output class="stopwatch__time" data-time>00:00.00</output>
+            <div class="tool__row tool__row--center">
+                <button class="button button--small" type="button" data-start>Start</button>
+                <button class="ghost" type="button" data-lap disabled>Lap</button>
+                <button class="ghost" type="button" data-reset disabled>Reset</button>
+            </div>
+            <ol class="stopwatch__laps" data-laps aria-label="Laps"></ol>
+        </div>
+    </div>
+</section>
+
+<section class="window window--tool" id="tool-chmod" data-window aria-labelledby="chmod-title">
+    <include src="window-bar.html" title="chmod" close="#main" />
+    <div class="window__body app" data-chmod>
+        <h2 id="chmod-title">Chmod</h2>
+        <p class="window__lead">Tick the boxes or type the number; the other side follows.</p>
+        <p class="tool__nojs">This tool needs JavaScript. <a href="https://tools.adwebdev.xyz/chmod-calculator">Use the chmod calculator on tools.adwebdev.xyz</a>.</p>
+        <div class="tool__ui">
+            <table class="chmod__grid">
+                <thead><tr><td></td><th scope="col">Read</th><th scope="col">Write</th><th scope="col">Execute</th></tr></thead>
+                <tbody>
+                    <tr><th scope="row">Owner</th><td><input type="checkbox" data-who="0" data-bit="4" aria-label="Owner read"></td><td><input type="checkbox" data-who="0" data-bit="2" aria-label="Owner write"></td><td><input type="checkbox" data-who="0" data-bit="1" aria-label="Owner execute"></td></tr>
+                    <tr><th scope="row">Group</th><td><input type="checkbox" data-who="1" data-bit="4" aria-label="Group read"></td><td><input type="checkbox" data-who="1" data-bit="2" aria-label="Group write"></td><td><input type="checkbox" data-who="1" data-bit="1" aria-label="Group execute"></td></tr>
+                    <tr><th scope="row">Public</th><td><input type="checkbox" data-who="2" data-bit="4" aria-label="Public read"></td><td><input type="checkbox" data-who="2" data-bit="2" aria-label="Public write"></td><td><input type="checkbox" data-who="2" data-bit="1" aria-label="Public execute"></td></tr>
+                </tbody>
+            </table>
+            <dl class="tool__facts">
+                <div><dt><label for="chmod-octal">Octal</label></dt><dd><input class="field field--short" id="chmod-octal" value="644" maxlength="3" inputmode="numeric" spellcheck="false" autocomplete="off" data-octal></dd></div>
+                <div><dt>Symbolic</dt><dd data-symbolic>rw-r--r--</dd></div>
+                <div><dt>Command</dt><dd><code data-cmd>chmod 644 file</code></dd></div>
+            </dl>
+            <p class="tool__note" data-chmod-note></p>
+        </div>
+    </div>
+</section>
+
+<section class="window window--tool" id="tool-status" data-window aria-labelledby="status-title">
+    <include src="window-bar.html" title="http-status" close="#main" />
+    <div class="window__body app" data-status>
+        <h2 id="status-title">HTTP status codes</h2>
+        <div class="tool__ui">
+            <form class="tool__row" data-status-form>
+                <label class="tool__label" for="status-in">Code</label>
+                <input class="field field--short" id="status-in" value="418" maxlength="3" inputmode="numeric" spellcheck="false" autocomplete="off" data-status-in>
+                <button class="ghost" type="button" data-status-random>Surprise me</button>
+            </form>
+            <div class="status__card" aria-live="polite">
+                <p class="status__code" data-status-code>418</p>
+                <p class="status__name" data-status-name>I'm a teapot</p>
+                <p class="status__about" data-status-about>Asked to brew coffee, a teapot refuses.</p>
+            </div>
+        </div>
+        <details class="status__all">
+            <summary>All the codes</summary>
+            <dl>
+                <ForEach collection="http_status" as="s"><div class="status__row" data-code="{s.code}" data-name="{s.name}" data-about="{s.about}"><dt><span>{s.code}</span> {s.name}</dt><dd>{s.about}</dd></div></ForEach>
+            </dl>
+        </details>
+    </div>
+</section>
+
+<section class="window window--tool" id="tool-keycode" data-window aria-labelledby="keycode-title">
+    <include src="window-bar.html" title="keycode" close="#main" />
+    <div class="window__body app" data-keycode>
+        <h2 id="keycode-title">Keycode</h2>
+        <p class="tool__nojs">This tool needs JavaScript. <a href="https://tools.adwebdev.xyz/keycode-info">Use keycode info on tools.adwebdev.xyz</a>.</p>
+        <div class="tool__ui">
+            <p class="keycode__pad" tabindex="0" role="button" data-keypad>Click here, then press any key</p>
+            <p class="keycode__big" data-key-big aria-live="polite"></p>
+            <dl class="tool__facts">
+                <div><dt>key</dt><dd data-k="key">–</dd></div>
+                <div><dt>code</dt><dd data-k="code">–</dd></div>
+                <div><dt>keyCode</dt><dd data-k="keyCode">–</dd></div>
+                <div><dt>location</dt><dd data-k="location">–</dd></div>
+                <div><dt>modifiers</dt><dd data-k="mods">–</dd></div>
+            </dl>
+        </div>
+    </div>
+</section>
+
+<section class="window window--tool" id="tool-radio" data-window aria-labelledby="radio-title">
+    <include src="window-bar.html" title="nato-radio" close="#main" />
+    <div class="window__body app" data-radio>
+        <h2 id="radio-title">NATO Radio</h2>
+        <p class="window__lead">For spelling an email address down a bad phone line.</p>
+        <p class="tool__nojs">This tool needs JavaScript. <a href="https://tools.adwebdev.xyz/text-to-nato-alphabet">Use text to NATO alphabet on tools.adwebdev.xyz</a>.</p>
+        <div class="tool__ui">
+            <label class="tool__label" for="radio-in">Text</label>
+            <input class="field" id="radio-in" value="adwebdev" spellcheck="false" autocomplete="off" data-radio-in>
+            <p class="radio__out" data-radio-out aria-live="polite"></p>
+            <div class="tool__row">
+                <button class="button button--small" type="button" data-speak hidden>Say it</button>
+                <button class="ghost" type="button" data-copy="[data-radio-out]">Copy</button>
+            </div>
+        </div>
+    </div>
+</section>
