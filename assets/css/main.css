@@ -283,6 +283,50 @@ html.os .window--page .window__bar { cursor: default; }
 /* The highlight theme draws comments at 2.9:1; lift them to a readable 5:1. */
 pre span[style*="color:#747369"] { color: #a9a79c !important; }
 
+/* ---- neofetch: the logo beside a readout whose facts are the CV. */
+.neofetch { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1.25rem; align-items: start; margin: 0.4rem 0 0.6rem; }
+.neofetch > svg { width: 100%; height: auto; color: var(--phosphor); margin-top: 0.4rem; }
+.neofetch dl { margin: 0; }
+.neofetch dl div { display: flex; gap: 0.5rem; }
+.neofetch dt { color: var(--signal); }
+.neofetch dt::after { content: ":"; }
+.neofetch dd { margin: 0; color: var(--phosphor); overflow-wrap: anywhere; }
+.neofetch__user { color: var(--phosphor); padding-bottom: 0.2rem; margin-bottom: 0.3rem; border-bottom: 1px dashed var(--line); }
+.neofetch__user span { color: var(--signal); }
+.neofetch__swatches { display: flex; gap: 0; margin-top: 0.6rem; }
+.neofetch__swatches span { width: 1.5rem; height: 0.9rem; }
+.neofetch__swatches span:nth-child(1) { background: var(--glass); outline: 1px solid var(--line); }
+.neofetch__swatches span:nth-child(2) { background: var(--line); }
+.neofetch__swatches span:nth-child(3) { background: var(--phosphor-dim); }
+.neofetch__swatches span:nth-child(4) { background: var(--phosphor-soft); }
+.neofetch__swatches span:nth-child(5) { background: var(--phosphor); }
+.neofetch__swatches span:nth-child(6) { background: var(--signal); }
+
+/* ---- Screensaver: the logo bouncing round an idle desktop. */
+.saver { position: fixed; inset: 0; z-index: 48; background: var(--glass); cursor: none; }
+.saver[hidden] { display: none; }
+.saver__logo { position: absolute; top: 0; left: 0; width: clamp(9rem, 16vw, 14rem); color: var(--phosphor); will-change: transform; transition: color 120ms linear; }
+.saver__logo.is-lit { color: var(--signal); }
+.saver__logo svg { width: 100%; height: auto; display: block; }
+.saver__note { position: absolute; left: 50%; bottom: 2.5rem; transform: translateX(-50%); font-family: var(--machine); font-size: 1.5rem; color: var(--signal); white-space: nowrap; }
+
+/* ---- 404: a kernel panic that takes the whole screen. */
+body:has(.panic) .menubar { display: none; }
+.panic {
+    min-height: 100vh;
+    display: grid; align-content: center; gap: 1.5rem;
+    padding: clamp(1.5rem, 5vw, 4rem);
+    font-family: var(--machine);
+    font-size: clamp(1.15rem, 0.9rem + 0.8vw, 1.55rem);
+    line-height: 1.3;
+}
+.panic__title { font-family: inherit; font-size: clamp(1.6rem, 1rem + 2vw, 2.6rem); font-weight: 400; line-height: 1.15; color: var(--signal); }
+.panic__trace { margin: 0; font-family: inherit; font-size: inherit; color: var(--phosphor-soft); white-space: pre-wrap; overflow-wrap: anywhere; }
+.panic__trace [data-panic-path] { color: var(--phosphor); }
+.panic__reboot { color: var(--phosphor-soft); }
+.panic__reboot a { color: var(--phosphor); text-decoration-color: var(--signal); text-decoration-thickness: 2px; }
+.panic__reboot a:hover { color: var(--signal-strong); }
+
 /* ---- Phones: no dragging; windows open as full sheets. */
 
 @media (max-width: 720px) {

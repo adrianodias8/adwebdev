@@ -221,6 +221,91 @@
     if (windows.has(id)) open(id, { focus: false });
   }
 
+  // ---- Screensaver: the logo bouncing off the edges of an idle desktop.
+  // Only when no window is open, so it never interrupts someone reading, and
+  // never on touch screens or with reduced motion.
+  let saver = null;
+  function screensaver() {
+    if (reduced || !matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    const mark = document.querySelector(".menubar__mark svg")?.cloneNode(true);
+    if (!mark) return;
+    mark.removeAttribute("role");
+    mark.removeAttribute("aria-label");
+    const screen_ = document.createElement("div");
+    screen_.className = "saver";
+    screen_.hidden = true;
+    screen_.setAttribute("aria-hidden", "true");
+    const logo = document.createElement("div");
+    logo.className = "saver__logo";
+    logo.append(mark);
+    const note = document.createElement("p");
+    note.className = "saver__note";
+    screen_.append(logo, note);
+    document.body.append(screen_);
+
+    const IDLE_MS = 45000;
+    let idle = 0;
+    let raf = 0;
+    let x = 0;
+    let y = 0;
+    let vx = 150;
+    let vy = 115;
+    let last = 0;
+    let corners = 0;
+
+    const frame = (t) => {
+      const dt = Math.min((t - last) / 1000, 0.05);
+      last = t;
+      const maxX = innerWidth - logo.offsetWidth;
+      const maxY = innerHeight - logo.offsetHeight;
+      x += vx * dt;
+      y += vy * dt;
+      const hitX = x <= 0 || x >= maxX;
+      const hitY = y <= 0 || y >= maxY;
+      if (hitX) { vx = -vx; x = Math.max(0, Math.min(x, maxX)); }
+      if (hitY) { vy = -vy; y = Math.max(0, Math.min(y, maxY)); }
+      if (hitX || hitY) {
+        logo.classList.toggle("is-lit");
+        blip(hitX && hitY ? 1320 : 440, 30, 0.02);
+      }
+      if (hitX && hitY) {
+        corners += 1;
+        note.textContent = corners === 1 ? "It hit the corner." : `It hit the corner. ${corners} times now.`;
+      }
+      logo.style.transform = `translate(${x}px, ${y}px)`;
+      raf = requestAnimationFrame(frame);
+    };
+
+    const anyWindowOpen = () => [...windows.values()].some((w) => !w.hidden);
+    const booting = () => !!document.querySelector("[data-boot]:not([hidden])");
+
+    const show = () => {
+      if (booting()) return arm();
+      screen_.hidden = false;
+      x = Math.random() * Math.max(1, innerWidth - logo.offsetWidth);
+      y = Math.random() * Math.max(1, innerHeight - logo.offsetHeight);
+      last = performance.now();
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(frame);
+    };
+    const hide = () => {
+      if (screen_.hidden) return;
+      cancelAnimationFrame(raf);
+      screen_.hidden = true;
+    };
+    const arm = () => {
+      clearTimeout(idle);
+      idle = setTimeout(() => (anyWindowOpen() ? arm() : show()), IDLE_MS);
+    };
+    const wake = () => { hide(); arm(); };
+    for (const ev of ["pointermove", "pointerdown", "keydown", "wheel", "scroll", "touchstart"]) {
+      addEventListener(ev, wake, { passive: true });
+    }
+    document.addEventListener("visibilitychange", () => (document.hidden ? (clearTimeout(idle), hide()) : arm()));
+    arm();
+    saver = show;
+  }
+
   // ---- Terminal
   function terminal() {
     const term = document.querySelector("[data-terminal]");
@@ -239,13 +324,72 @@
     const input = line.querySelector("input");
     const files = [...windows.keys()].filter((k) => k !== "terminal");
     const book = document.querySelector(".menubar__book")?.href;
+    // neofetch: the logo beside a system readout whose facts are the CV.
+    const neofetch = () => {
+      const box = document.createElement("div");
+      box.className = "neofetch";
+      const mark = document.querySelector(".menubar__mark svg")?.cloneNode(true);
+      if (mark) {
+        mark.removeAttribute("role");
+        mark.removeAttribute("aria-label");
+        mark.setAttribute("aria-hidden", "true");
+        box.append(mark);
+      }
+      const years = new Date().getFullYear() - 2011;
+      const services = document.querySelectorAll(".config__row").length;
+      const roles = document.querySelectorAll(".log__row").length;
+      const facts = [
+        ["OS", "adwebdev os"],
+        ["Host", "Brussels, Belgium"],
+        ["Kernel", "PHP (Drupal, Laravel)"],
+        ["Uptime", `${years} years, since Drupal 7`],
+        ["Packages", `${services} services, ${roles} roles`],
+        ["Shell", "Linux, Docker"],
+        ["WM", "Statico (Rust)"],
+        ["Terminal", "you're in it"],
+        ["Camera", "Minolta SR-1, 35 mm film"],
+        ["Resolution", `${screen.width}x${screen.height}`],
+      ];
+      const list = document.createElement("dl");
+      const head = document.createElement("p");
+      head.className = "neofetch__user";
+      head.innerHTML = "<span>adriano</span>@<span>adwebdev</span>";
+      list.append(head);
+      for (const [k, v] of facts) {
+        const row = document.createElement("div");
+        const dt = document.createElement("dt");
+        const dd = document.createElement("dd");
+        dt.textContent = k;
+        dd.textContent = v;
+        row.append(dt, dd);
+        list.append(row);
+      }
+      const swatches = document.createElement("p");
+      swatches.className = "neofetch__swatches";
+      swatches.setAttribute("aria-hidden", "true");
+      for (let i = 0; i < 6; i++) swatches.append(document.createElement("span"));
+      list.append(swatches);
+      box.append(list);
+      line.before(box);
+      term.scrollTop = term.scrollHeight;
+      return null;
+    };
     const commands = {
-      help: () => "help, ls, open <name>, whoami, book, date, clear",
+      help: () => "help, ls, open <name>, whoami, neofetch, book, date, screensaver, clear",
+      neofetch,
+      screensaver: () => {
+        if (!saver) return "screensaver: not available here.";
+        setTimeout(saver, 400);
+        return "Starting the screensaver. Move or press anything to wake it.";
+      },
       ls: () => [...document.querySelectorAll(".volume__file")].map((f) => f.textContent || f.dataset.file).join("  "),
       whoami: () => "Adriano Dias. Freelance web developer, Brussels. Drupal, Laravel, static sites.",
       date: () => new Intl.DateTimeFormat("en-GB", { dateStyle: "full", timeStyle: "short", timeZone: "Europe/Brussels" }).format(new Date()),
       book: () => { if (book) open_(book); return "Opening the booking page…"; },
-      clear: () => { term.querySelectorAll("p").forEach((p) => p.remove()); return null; },
+      clear: () => {
+        term.querySelectorAll(":scope > p, :scope > .neofetch").forEach((n) => n.remove());
+        return null;
+      },
       sudo: () => "Nice try.",
       rm: () => "Everything here is in git. Nothing is lost.",
     };
@@ -269,12 +413,28 @@
     });
   }
 
+  // ---- 404: a kernel panic. Show which address failed; any key reboots.
+  function panic() {
+    const page = document.querySelector("[data-panic]");
+    if (!page) return false;
+    const path = page.querySelector("[data-panic-path]");
+    if (path) path.textContent = decodeURIComponent(location.pathname);
+    const reboot = page.querySelector("[data-reboot]");
+    addEventListener("keydown", (e) => {
+      if (e.metaKey || e.ctrlKey || e.altKey || e.key === "Tab" || e.key === "Shift") return;
+      if (reboot) location.href = reboot.href;
+    });
+    return true;
+  }
+
   function start() {
     root.classList.add("os");
     clock();
     switches();
+    if (panic()) return;
     if (!document.querySelector("[data-desktop]")) return;
     windowsUp();
+    screensaver();
     terminal();
     boot(typeNames);
   }

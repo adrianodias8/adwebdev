@@ -1,12 +1,17 @@
-<layout src="base.html" title="Not found · {site.name}">
-<main id="main" class="page">
-    <article class="window window--page" aria-labelledby="page-title">
-        <include src="window-bar.html" file="error.log" close="/" />
-        <div class="window__body">
-            <h1 id="page-title">File not found</h1>
-            <p class="window__lead">That address isn't on this disk. It may have moved when the site was rebuilt.</p>
-            <p><a class="text-action" href="/">Back to the desktop</a></p>
-        </div>
-    </article>
+<layout src="base.html" title="Kernel panic · {site.name}">
+<main id="main" class="panic" data-panic>
+    <h1 class="panic__title">Kernel panic - not syncing: page not found</h1>
+    <pre class="panic__trace" aria-label="Error details">CPU: 0 PID: 404 Comm: browser Not tainted adwebdev-os
+Hardware name: whatever you are reading this on
+Requested: <span data-panic-path>an address that is not on this disk</span>
+Call Trace:
+ &lt;TASK&gt;
+ open_page+0x194/0x404
+ follow_link+0x2f/0x80
+ resolve_route+0x11a/0x2c0
+ visitor_curiosity+0x0/0x1
+ &lt;/TASK&gt;
+---[ end Kernel panic - not syncing: page not found ]---</pre>
+    <p class="panic__reboot"><a href="/" data-reboot>Press any key to reboot</a>, or click here to go back to the desktop.</p>
 </main>
 </layout>
