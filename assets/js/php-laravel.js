@@ -400,7 +400,7 @@
 
   function modelDefs(data) {
     const users = [{
-      id: 1, name: "Adriano Dias", email: data.email || "hello@adwebdev.xyz",
+      id: 1, name: "Adriano Dias", email: data.email || "contact@adwebdev.xyz",
       email_verified_at: "2011-01-05 09:00:00",
       password: "$2y$12$Tn3pV1VzLq2T3cF5o0Fz0e1Jq6Yb3kz2m0yQwYH0rD6m3m3Kq0r2a",
       remember_token: null, created_at: "2011-01-05 09:00:00", updated_at: stamp(),

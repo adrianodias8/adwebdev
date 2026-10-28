@@ -216,6 +216,22 @@ html:not(.os) .window__min, html:not(.os) .window__zoom { display: none; }
 .folder .list-view tbody tr:hover, .folder .list-view tbody tr:has(.is-selected) { background: var(--phosphor); }
 .folder .list-view tbody tr:hover *, .folder .list-view tbody tr:has(.is-selected) * { color: var(--glass); background: none; }
 
+/* Services: private AI, and the assessment that starts it. */
+.ai { margin-top: 2rem; padding-top: 1.5rem; border-top: 1px dashed var(--line); color: var(--phosphor-soft); max-width: 62ch; }
+.ai p { margin-bottom: 1rem; }
+.window .ai__title { margin-bottom: 0.75rem; font-family: var(--machine); font-size: 1.8rem; font-weight: 400; color: var(--signal); }
+.ai__note { color: var(--phosphor); }
+.offer { margin: 1.5rem 0; padding: 1.1rem 1.25rem; border: 1px solid var(--phosphor-soft); background: var(--glass); }
+.offer__head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.25rem 1rem; font-family: var(--machine); font-size: 1.5rem; line-height: 1.1; }
+.offer__name { color: var(--phosphor); }
+.offer__price { color: var(--signal); }
+.offer__list { margin: 0 0 1rem; padding-left: 1.2rem; }
+.offer__list li::marker { color: var(--signal); }
+.offer__flow { list-style: none; margin: 0; padding: 0; counter-reset: step; display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.4rem 1rem; }
+.offer__flow li { counter-increment: step; display: flex; gap: 0.6rem; align-items: baseline; color: var(--phosphor); }
+.offer__flow li::before { content: counter(step, decimal-leading-zero); font-family: var(--machine); font-size: 1.2rem; color: var(--phosphor-dim); }
+.ai .book { margin-top: 0.5rem; }
+
 /* Get Info: what a project is, and where it lives. */
 .info__head { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
 .info__icon { flex: none; width: 4rem; height: 4rem; color: var(--phosphor); }

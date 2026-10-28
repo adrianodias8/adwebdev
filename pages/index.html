@@ -110,7 +110,7 @@
             <img class="profile__photo" src="/assets/images/adriano.jpg" alt="Black and white portrait of Adriano Dias, wearing round glasses" width="900" height="1350">
             <div>
                 <h2 id="profile-title">Adriano Dias</h2>
-                <p>A developer from Portugal, living in Brussels. My core expertise is PHP, especially Drupal and Laravel, and I'm just as interested in Linux, Docker and newer things like LLMs. Away from the code you'll usually find me taking photographs.</p>
+                <p>A developer from Portugal, living in Brussels. My core expertise is PHP, especially Drupal and Laravel, and I'm just as interested in Linux, Docker and newer things like LLMs. Lately I've been playing a lot with AI, and I now also offer private AI consultancy. Away from the code you'll usually find me taking photographs.</p>
                 <include src="book.html" />
                 <p class="profile__more"><a href="/about/">The longer version</a> · <a href="{site.github}">GitHub</a></p>
             </div>
@@ -121,13 +121,46 @@
         <include src="window-bar.html" title="services.cfg" close="#main" />
         <div class="window__body">
             <h2 id="services-title">What I can help with</h2>
-            <p class="window__lead">Most of my work is Drupal and Laravel, from first build to long-term maintenance. Around it, the things a site usually needs.</p>
+            <p class="window__lead">Drupal and Laravel are my core: I still work as a Drupal and Laravel expert for the European Commission, and take on projects from first build to long-term maintenance. Lately I've also been playing a lot with AI, and I now offer consultancy in it too.</p>
             <table class="list-view">
                 <thead><tr><th scope="col">Service</th><th scope="col">What it covers</th></tr></thead>
                 <tbody>
                     <ForEach collection="services" as="s"><tr class="config__row"><th scope="row">{s.name}</th><td>{s.about}</td></tr></ForEach>
                 </tbody>
             </table>
+
+            <section class="ai" aria-labelledby="ai-title">
+                <h3 id="ai-title" class="ai__title">Private AI</h3>
+                <p class="ai__note">I'm a person with a lot of ideas, so I take the recent advances in AI as a blessing: now I can experiment with so many new things. Would you like to try something with me? Let's talk :)</p>
+                <p>I design and deploy private AI systems that run entirely inside your business infrastructure. Your documents, source code and customer information stay under your control. I handle the AI server, models, private document search and integration with your existing software.</p>
+
+                <div class="offer">
+                    <p class="offer__head"><span class="offer__name">Private AI Assessment</span> <span class="offer__price">€750 · one day</span></p>
+                    <p>We spend a day understanding:</p>
+                    <ul class="offer__list">
+                        <li>what data you have</li>
+                        <li>who needs AI</li>
+                        <li>your confidentiality requirements</li>
+                        <li>the expected number of users</li>
+                        <li>your current IT infrastructure</li>
+                        <li>the workflows where it would help</li>
+                    </ul>
+                    <p>You get a written plan, step by step:</p>
+                    <ol class="offer__flow">
+                        <li>Use cases</li>
+                        <li>Data classification</li>
+                        <li>Cloud or local</li>
+                        <li>Recommended model</li>
+                        <li>Hardware sizing</li>
+                        <li>Architecture</li>
+                        <li>Estimated implementation cost</li>
+                        <li>Security considerations</li>
+                        <li>Pilot recommendation</li>
+                    </ol>
+                </div>
+                <p>From there, a small pilot is usually €3k–€10k, and a production deployment grows from that.</p>
+                <include src="book.html" />
+            </section>
         </div>
     </section>
 
@@ -145,7 +178,7 @@
         <form class="compose" action="mailto:{site.email}" method="get" data-compose data-to="{site.email}">
             <div class="compose__toolbar">
                 <button class="button" type="submit">Send</button>
-                <a class="text-action" href="{site.booking}" target="_blank" rel="noopener">Or book a call</a>
+                <a class="text-action" href="{site.booking}" target="_blank" rel="noopener" data-browse>Or book a call</a>
             </div>
             <h2 id="contact-title" class="visually-hidden">Write to Adriano</h2>
             <div class="compose__field"><label for="mail-to">To:</label><input id="mail-to" value="{site.email}" readonly></div>

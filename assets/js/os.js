@@ -364,7 +364,10 @@
         doc.addEventListener("click", (e) => {
           const a = e.target.closest?.("a[href]");
           if (!a || a.target === "_top") return;
-          if (new URL(a.href, url).origin !== location.origin) {
+          if (a.hasAttribute("data-browse")) {
+            e.preventDefault();
+            browse(a.href);
+          } else if (new URL(a.href, url).origin !== location.origin) {
             e.preventDefault();
             window.open(a.href, "_blank", "noopener");
           }
@@ -390,6 +393,10 @@
       else window.open(u.href, "_blank", "noopener");
     });
     buttons();
+    // A few other sites are glad to be framed, the booking page among them.
+    document.querySelectorAll("a[data-browse]").forEach((a) => {
+      a.addEventListener("click", (e) => { e.preventDefault(); browse(a.href); });
+    });
   }
 
   // ---- Mail: send through the visitor's own mail app.
@@ -1179,10 +1186,10 @@
       help: () => "help, ls, open <name>, whoami, neofetch, uuid, php artisan tinker, drush, book, date, screensaver, clear",
       ls: () => "About Me  Services  Experience  Mail  Browser  Terminal  Projects/  Posts/  Tools/",
       uuid: () => crypto.randomUUID?.() || "uuid: needs a secure (https) page.",
-      whoami: () => "Adriano Dias. Freelance web developer, Brussels. Drupal, Laravel, static sites.",
+      whoami: () => "Adriano Dias. Web developer, Brussels. Drupal, Laravel, static sites, private AI.",
       neofetch,
       date: () => new Intl.DateTimeFormat("en-GB", { dateStyle: "full", timeStyle: "short", timeZone: "Europe/Brussels" }).format(new Date()),
-      book: () => { if (book) window.open(book, "_blank", "noopener"); return "Opening the booking page…"; },
+      book: () => { if (book) browse(book); return "Opening the booking page…"; },
       screensaver: () => {
         if (!saver) return "screensaver: not available here.";
         setTimeout(saver, 400);
