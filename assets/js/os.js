@@ -15,12 +15,24 @@
   const track = (name, data) => window.analytics?.track(name, data);
   const from = () => window.analytics?.from() ?? "url";
 
-  // ---- Sound: short blips, off unless the visitor turns it on.
+  // ---- Sound: short blips, off unless the visitor turns it on. Browsers
+  // keep audio suspended until the visitor clicks or types, and audio made
+  // before then (the boot log, the agent popping up) stays suspended unless
+  // something resumes it. So any interaction resumes it, and blips that come
+  // before one are skipped rather than saved up to play all at once.
   let audio = null;
   let soundOn = store.get("os.sound") === "on";
+  const resume = () => audio.resume().catch(() => {});
+  const wake = () => { if (audio?.state === "suspended") resume(); };
+  addEventListener("pointerdown", wake, true);
+  addEventListener("keydown", wake, true);
   function blip(freq = 880, ms = 40, gain = 0.03) {
     if (!soundOn) return;
     audio ??= new (window.AudioContext || window.webkitAudioContext)();
+    if (audio.state !== "running") {
+      resume();
+      if (!navigator.userActivation?.isActive) return;
+    }
     const o = audio.createOscillator();
     const g = audio.createGain();
     o.type = "square";
