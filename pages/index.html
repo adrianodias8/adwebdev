@@ -212,6 +212,23 @@
         </div>
     </section>
 
+    <section class="window window--terminal window--agent" id="agent" data-window aria-labelledby="agent-title">
+        <include src="window-bar.html" title="agent (pretend)" close="#main" />
+        <div class="window__body agent" data-agent>
+            <h2 id="agent-title" class="visually-hidden">A pretend AI agent, rewriting this site in the background</h2>
+            <div class="agent__head">
+                <svg class="agent__sprite" data-agent-sprite aria-hidden="true"></svg>
+                <div>
+                    <p class="agent__name"><span data-agent-name>Claude Code</span> <span class="agent__version">(pretend)</span></p>
+                    <p class="agent__meta"><span data-agent-model>claude</span> · ~/adwebdev</p>
+                </div>
+            </div>
+            <div class="agent__log" data-agent-log aria-hidden="true"></div>
+            <p class="agent__spin" data-agent-spin aria-hidden="true"></p>
+            <p class="agent__input"><span>&gt;</span> <span class="agent__hint">Nothing here touches the site. It only looks busy.</span></p>
+        </div>
+    </section>
+
     </div>
 </main>
 

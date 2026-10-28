@@ -141,7 +141,7 @@
     win.dataset.placed = "1";
   }
 
-  function open(id, { focus = true } = {}) {
+  function open(id, { focus = true, via } = {}) {
     const win = windows.get(id);
     if (!win) return;
     const wasHidden = win.hidden;
@@ -159,7 +159,7 @@
       launch(id);
       blip(880, 40);
       win.dataset.since = Date.now();
-      track("open-app", { app: id, via: from() });
+      track("open-app", { app: id, via: via ?? from() });
     }
     dockState();
     if (focus) (win.querySelector("[data-focus-first]") || win).focus({ preventScroll: true });
@@ -175,6 +175,7 @@
     blip(440, 40);
     history.replaceState(null, "", location.pathname);
     settle();
+    win.dispatchEvent(new Event("os:close"));
   }
 
   function minimise(win) {
@@ -767,7 +768,7 @@
       logo.style.transform = `translate(${x}px, ${y}px)`;
       raf = requestAnimationFrame(frame);
     };
-    const reading = () => visible().length > 0;
+    const reading = () => visible().some((w) => w.id !== "agent");
     const booting = () => !!document.querySelector("[data-boot]:not([hidden])");
     const show = (how = "idle") => {
       if (booting()) return arm();
@@ -1127,6 +1128,285 @@
     drushRun = (text) => c.submit(text);
   }
 
+  // ---- The agent: a pretend coding agent that turns up a few seconds into a
+  // visit and rewrites this site's own code in fake diffs, its mascot changing
+  // with the model, back and forth. Closed once, it comes back a minute
+  // later; closed twice, it stays closed for the visit. Never on phones.
+  const SPRITES = {
+    claude: { colours: { O: "#d97757" }, rows: [
+      "..OOOOOOOO..",
+      "..OkOOOOkO..",
+      "..OkOOOOkO..",
+      "OOOOOOOOOOOO",
+      "OOOOOOOOOOOO",
+      "..OOOOOOOO..",
+      "..O.O..O.O..",
+      "..O.O..O.O..",
+    ] },
+    deepseek: { colours: { B: "#4d6bfe", b: "#9db0ff", W: "#cfe0ff" }, rows: [
+      "..W.W.........",
+      "...W..........",
+      "..BBBBB.....BB",
+      ".BBBBBBB...BB.",
+      "BBkBBBBBB.BB..",
+      "BBBBBBBBBBBB..",
+      "BbbbbbbBBBB...",
+      ".bbbbbbbBB....",
+      "..bbbbbb......",
+    ] },
+    gemini: { colours: { a: "#4f8bf7", c: "#9b72f2", d: "#d96570" }, rows: [
+      "....a....",
+      "....a....",
+      "...aac...",
+      "..aaccc..",
+      "aaaacccdd",
+      "..accdd..",
+      "...cdd...",
+      "....d....",
+      "....d....",
+    ] },
+    ollama: { colours: { W: "#f1f0ea", n: "#bdbcb4" }, rows: [
+      "WW....WW",
+      "WW....WW",
+      "WWWWWWWW",
+      "WkWWWWkW",
+      "WWWWWWWW",
+      ".WWnnWW.",
+      ".WWWWWW.",
+      "..WWWW..",
+      "..WWWW..",
+    ] },
+  };
+  const MODELS = [
+    { id: "claude", name: "Claude Code", model: "claude-opus", verbs: ["Clauding", "Pondering", "Noodling", "Percolating", "Schlepping", "Honking"] },
+    { id: "deepseek", name: "DeepSeek", model: "deepseek-coder", verbs: ["Thinking", "Reasoning", "Diving deep", "Surfacing"] },
+    { id: "gemini", name: "Gemini CLI", model: "gemini-pro", verbs: ["Sparkling", "Considering", "Twinkling", "Weighing it up"] },
+    { id: "ollama", name: "Ollama", model: "llama3, on this machine", verbs: ["Grazing", "Chewing it over", "Running locally", "Warming the GPU"] },
+  ];
+  // There and back again: Claude, DeepSeek, Gemini, Ollama, Gemini, DeepSeek…
+  const ROUTE = [0, 1, 2, 3, 2, 1];
+  const THOUGHTS = {
+    "os.js": ["I'll tighten how windows take focus.", "The terminal could use one more command.", "The dock should bounce a little nicer.", "Making the boot log a touch quicker."],
+    "tools.js": ["One of the tools trips on an edge case. Fixing it.", "The diff tool can be smarter about whitespace."],
+    "php": ["Teaching the pretend PHP another builtin.", "Drush deserves one more command.", "Tinker's dump output can look more like PsySH."],
+    "css": ["Now the styles, so this holds up on a phone.", "Nudging the CRT glow.", "Evening out the spacing in the windows."],
+    "analytics.js": ["Counting one more thing, without counting people."],
+    any: ["Small refactor: one helper instead of three.", "I'll leave a comment so future me understands this.", "Reading before writing."],
+  };
+
+  function drawSprite(svg, { colours, rows }) {
+    const width = Math.max(...rows.map((r) => r.length));
+    svg.setAttribute("viewBox", `0 0 ${width} ${rows.length}`);
+    svg.innerHTML = rows.flatMap((row, y) => [...row].map((c, x) => (colours[c] ? `<rect x="${x}" y="${y}" width="1" height="1" fill="${colours[c]}"/>` : ""))).join("");
+  }
+
+  // The site's own code, as it is served: the scripts and the stylesheet.
+  async function agentFiles() {
+    const urls = new Set([...document.querySelectorAll('script[src*="/assets/"], link[rel="stylesheet"][href*="/assets/"], link[data-php]')].map((el) => el.src || el.href));
+    const files = [];
+    for (const url of urls) {
+      try {
+        const res = await fetch(url);
+        const lines = res.ok ? (await res.text()).split("\n") : [];
+        const path = new URL(url).pathname.replace(/^.*?(assets\/)/, "$1").replace(/\.[0-9a-f]{8}(\.\w+)$/, "$1");
+        if (lines.length > 60) files.push({ path, lines });
+      } catch {}
+    }
+    return files;
+  }
+
+  let agentArm = null;
+  function agent() {
+    const win = document.getElementById("agent");
+    const body = win?.querySelector("[data-agent]");
+    if (!body) return;
+    const log = body.querySelector("[data-agent-log]");
+    const spin = body.querySelector("[data-agent-spin]");
+    const sprite = body.querySelector("[data-agent-sprite]");
+    const pick = (list) => list[randomBelow(list.length)];
+    const between = (a, b) => a + randomBelow(b - a + 1);
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    // Work only while someone can see it.
+    const wait = async (ms) => {
+      await sleep(ms);
+      while (win.hidden || document.hidden) await sleep(500);
+    };
+
+    let route = 0;
+    let current = MODELS[0];
+    const become = (m, animate = true) => {
+      current = m;
+      body.dataset.model = m.id;
+      body.querySelector("[data-agent-name]").textContent = m.name;
+      body.querySelector("[data-agent-model]").textContent = m.model;
+      drawSprite(sprite, SPRITES[m.id]);
+      if (animate && !reduced) {
+        sprite.classList.remove("is-swapping");
+        void sprite.getBoundingClientRect();
+        sprite.classList.add("is-swapping");
+      }
+    };
+    become(current, false);
+
+    const say = (text, cls) => {
+      const stick = log.scrollHeight - log.scrollTop - log.clientHeight < 48;
+      const p = document.createElement("p");
+      p.textContent = text;
+      if (cls) p.className = cls;
+      log.append(p);
+      while (log.childElementCount > 300) log.firstElementChild.remove();
+      if (stick) log.scrollTop = log.scrollHeight;
+    };
+    const stream = async (rows) => {
+      for (const [text, cls] of rows) {
+        say(text, cls);
+        await wait(between(30, 70));
+      }
+    };
+
+    let tokens = 0;
+    const think = async (ms) => {
+      const verb = pick(current.verbs);
+      const glyphs = reduced ? ["✻"] : ["·", "✢", "✳", "✶", "✻", "✽", "✻", "✶", "✳", "✢"];
+      const began = performance.now();
+      let i = 0;
+      const tick = () => {
+        tokens += between(3, 40);
+        const secs = Math.round((performance.now() - began) / 1000);
+        const k = tokens >= 1000 ? `${(tokens / 1000).toFixed(1)}k` : tokens;
+        spin.innerHTML = "";
+        spin.append(`${glyphs[i++ % glyphs.length]} ${verb}… `);
+        const meta = document.createElement("span");
+        meta.textContent = `(${secs}s · ↑ ${k} tokens · esc to interrupt)`;
+        spin.append(meta);
+      };
+      tick();
+      const timer = setInterval(tick, 120);
+      await wait(ms);
+      clearInterval(timer);
+      spin.textContent = "";
+    };
+
+    const pad = (n) => String(n).padStart(4);
+    const clip = (line) => (line.length > 96 ? `${line.slice(0, 95)}…` : line);
+    function hunk({ path, lines }) {
+      let at = between(2, lines.length - 24);
+      // Start at the top of something: a comment, a declaration or a rule.
+      for (let i = 0; i < 40 && !/^\s*(\/\/|\/\*|function|const|let|async|[.#a-z][\w.#:() -]*\{)/.test(lines[at]); i++) at += 1;
+      const dels = pick([0, 0, 1, 1, 2]);
+      const adds = between(4, 12);
+      const rows = [];
+      for (let n = Math.max(0, at - 2); n < at; n++) rows.push([`${pad(n + 1)}   ${clip(lines[n])}`, "is-ctx"]);
+      for (let n = at; n < at + dels; n++) rows.push([`${pad(n + 1)} - ${clip(lines[n])}`, "is-del"]);
+      for (let n = at + dels; n < at + dels + adds; n++) rows.push([`${pad(n + 1 - dels)} + ${clip(lines[n])}`, "is-add"]);
+      rows.push([`${pad(at + adds + 1)}   ${clip(lines[at + dels + adds] ?? "")}`, "is-ctx"]);
+      const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+      return { rows, adds, dels, summary: `  ⎿  Updated ${path} with ${plural(adds, "addition")}${dels ? ` and ${plural(dels, "removal")}` : ""}` };
+    }
+    const thoughtFor = (path) => {
+      const key = Object.keys(THOUGHTS).find((k) => path.includes(k.replace(/^css$/, ".css")));
+      return pick(key ? THOUGHTS[key].concat(THOUGHTS.any) : THOUGHTS.any);
+    };
+
+    let changed = { files: new Set(), adds: 0, dels: 0 };
+    async function run() {
+      const files = await agentFiles();
+      if (!files.length) return say("Nothing to work on. Rather restful.", "is-result");
+      const names = [...new Set(files.flatMap((f) => [...f.lines.join("\n").matchAll(/function (\w{4,})/g)].map((m) => m[1])))];
+      say("> make the portfolio better while nobody's looking", "is-user");
+      await think(2200);
+      let scene = 0;
+      for (;;) {
+        const file = pick(files);
+        scene += 1;
+        if (scene % 5 === 0) {
+          route = (route + 1) % ROUTE.length;
+          const next = MODELS[ROUTE[route]];
+          say(`> /model ${next.id}`, "is-user");
+          await wait(400);
+          become(next);
+          say(`  ⎿  Set model to ${next.name} (${next.model})`, "is-result");
+          await think(between(1200, 2200));
+        }
+        say(`⏺ ${thoughtFor(file.path)}`, "is-say");
+        await wait(500);
+        const roll = randomBelow(10);
+        if (roll < 2 && names.length) {
+          const name = pick(names);
+          const hits = files.reduce((n, f) => n + f.lines.filter((l) => l.includes(name)).length, 0);
+          say(`⏺ Search(pattern: "${name}", path: "assets")`, "is-tool");
+          await think(between(700, 1500));
+          say(`  ⎿  Found ${hits} line${hits === 1 ? "" : "s"}`, "is-result");
+        } else if (roll < 4) {
+          say(`⏺ Read(${file.path})`, "is-tool");
+          await think(between(700, 1500));
+          say(`  ⎿  Read ${file.lines.length} lines`, "is-result");
+        }
+        const h = hunk(file);
+        say(`⏺ Update(${file.path})`, "is-tool");
+        await think(between(1200, 3200));
+        say(h.summary, "is-result");
+        await stream(h.rows);
+        changed.files.add(file.path);
+        changed.adds += h.adds;
+        changed.dels += h.dels;
+        if (scene % 4 === 0) {
+          const check = pick([
+            ["statico check --strict", `✓ 5 page(s), ${between(130, 150)} link(s) checked: 0 error(s), 0 warning(s)`],
+            ["statico build", `⚡ Built 5 page(s) (1 from markdown) into _site in ${between(38, 64)} ms`],
+            ["git diff --stat", `${changed.files.size} files changed, ${changed.adds} insertions(+), ${changed.dels} deletions(-)`],
+          ]);
+          say(`⏺ Bash(${check[0]})`, "is-tool");
+          await think(between(900, 2000));
+          say(`  ⎿  ${check[1]}`, "is-result");
+        }
+        if (scene % 7 === 0) {
+          say("⏺ Update Todos", "is-tool");
+          await wait(300);
+          const todos = [...new Set([thoughtFor(file.path), pick(THOUGHTS.any), thoughtFor(pick(files).path)])];
+          await stream(todos.map((t, i) => [`  ${i === 0 ? "☒" : "☐"} ${t}`, i === 0 ? "is-done" : "is-todo"]));
+        }
+        await wait(between(600, 1400));
+      }
+    }
+
+    let started = false;
+    const KEY = "os.agent.closed";
+    let closes = 0;
+    try { closes = Number(sessionStorage.getItem(KEY)) || 0; } catch {}
+    const pop = () => {
+      if (!win.hidden || phone()) return;
+      open("agent", { focus: false, via: "popup" });
+      // The first time, tuck it into the bottom right, clear of the dock.
+      if (!win.dataset.tucked) {
+        win.dataset.tucked = "1";
+        const box = win.offsetParent?.getBoundingClientRect();
+        const dockTop = document.querySelector(".dock")?.getBoundingClientRect().top ?? innerHeight;
+        if (box) {
+          win.style.left = `${Math.max(8, box.width - win.offsetWidth - 20)}px`;
+          win.style.top = `${Math.max(8, dockTop - box.top - win.offsetHeight - 16)}px`;
+        }
+      }
+    };
+    win.addEventListener("os:close", () => {
+      closes += 1;
+      try { sessionStorage.setItem(KEY, closes); } catch {}
+      if (closes === 1) setTimeout(pop, 60000);
+    });
+    // However it opens, the agent starts working the first time it is seen.
+    const begin = () => {
+      if (!win.hidden && !started) {
+        started = true;
+        run();
+      }
+    };
+    new MutationObserver(begin).observe(win, { attributes: true, attributeFilter: ["hidden"] });
+    begin();
+    agentArm = () => {
+      if (closes < 2) setTimeout(pop, 6000);
+    };
+  }
+
   // ---- Terminal
   function terminal() {
     const term = document.querySelector("[data-terminal]");
@@ -1155,6 +1435,7 @@
       radio: "tool-radio", nato: "tool-radio", tinker: "tool-tinker", drush: "tool-drush",
       diff: "tool-diff", ascii: "tool-ascii", compose: "tool-compose", hash: "tool-hash", lorem: "tool-lorem",
       faker: "tool-person", person: "tool-person", colour: "tool-colour", color: "tool-colour", colours: "tool-colour",
+      agent: "agent", ai: "agent", claude: "agent",
     };
     const statico = document.querySelector('.file[data-kind="browser"][href*="/statico/"]');
     const playground = document.querySelector('.file[data-kind="browser"][href*="statico-playground"]');
@@ -1307,7 +1588,8 @@
     screensaver();
     terminal();
     dockState();
-    boot(() => {});
+    agent();
+    boot(() => agentArm?.());
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);

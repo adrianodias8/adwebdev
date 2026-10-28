@@ -298,6 +298,38 @@ html.os .browser__nojs { display: none; }
 .terminal a { color: var(--phosphor); text-decoration-color: var(--signal); overflow-wrap: anywhere; }
 .window--console .terminal { min-height: 24rem; font-size: 1.3rem; }
 
+/* The pretend agent: a coding agent at work, its mascot changing with the
+   model. Each model brings its own accent. */
+html:not(.os) .window--agent { display: none; }
+.agent { --accent: oklch(68% 0.13 42); --add: oklch(45% 0.09 150 / 0.35); --del: oklch(45% 0.12 25 / 0.35); display: flex; flex-direction: column; gap: 0.6rem; height: min(26rem, 60dvh); padding: 0.9rem 1rem; font-family: var(--machine); font-size: 1.2rem; line-height: 1.25; color: var(--phosphor-soft); }
+html.os .window--agent .window__body { overflow: hidden; }
+.agent[data-model="deepseek"] { --accent: oklch(62% 0.19 268); }
+.agent[data-model="gemini"] { --accent: oklch(68% 0.15 285); }
+.agent[data-model="ollama"] { --accent: oklch(92% 0.005 95); }
+.agent__head { flex: none; display: flex; align-items: center; gap: 0.9rem; padding: 0.55rem 0.8rem; border: 1px solid var(--accent); border-radius: 6px; transition: border-color 300ms; }
+.agent__sprite { flex: none; width: 3.2rem; height: 2.6rem; shape-rendering: crispEdges; }
+.agent__sprite.is-swapping { animation: agent-swap 420ms steps(4) both; }
+@keyframes agent-swap { 0% { opacity: 0; transform: scale(0.6); } 100% { opacity: 1; transform: none; } }
+.agent__name { color: var(--phosphor); font-size: 1.4rem; line-height: 1.1; }
+.agent__version, .agent__meta { color: var(--phosphor-dim); }
+.agent__log { flex: 1; min-height: 0; overflow: auto; scrollbar-width: thin; }
+.agent__log p { white-space: pre-wrap; overflow-wrap: anywhere; }
+.agent__log .is-say::first-letter, .agent__log .is-tool::first-letter { color: var(--accent); }
+.agent__log .is-tool { margin-top: 0.6rem; color: var(--phosphor); }
+.agent__log .is-say { margin-top: 0.6rem; color: var(--phosphor); }
+.agent__log .is-user { margin-top: 0.6rem; color: var(--phosphor-dim); }
+.agent__log .is-result { color: var(--phosphor-dim); }
+.agent__log .is-ctx, .agent__log .is-add, .agent__log .is-del { white-space: pre; overflow: hidden; text-overflow: ellipsis; padding-left: 0.4rem; }
+.agent__log .is-ctx { color: var(--phosphor-dim); }
+.agent__log .is-add { background: var(--add); color: var(--phosphor); }
+.agent__log .is-del { background: var(--del); color: var(--phosphor-soft); }
+.agent__log .is-todo { color: var(--phosphor-soft); }
+.agent__log .is-done { color: var(--phosphor-dim); text-decoration: line-through; }
+.agent__spin { flex: none; min-height: 1.25em; color: var(--accent); }
+.agent__spin span { color: var(--phosphor-dim); }
+.agent__input { flex: none; padding: 0.35rem 0.7rem; border: 1px solid var(--line); border-radius: 6px; color: var(--phosphor-dim); }
+.agent__input span:first-child { color: var(--accent); }
+
 /* neofetch: the logo beside a readout whose facts are the CV. */
 .neofetch { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1.25rem; align-items: start; margin: 0.4rem 0 0.6rem; }
 .neofetch > svg { width: 100%; height: auto; color: var(--phosphor); margin-top: 0.4rem; }

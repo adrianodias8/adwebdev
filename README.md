@@ -41,6 +41,7 @@ Pushing to `main` checks, builds and deploys it. See
 | The boot log and window contents | `pages/index.html` |
 | Bio | `pages/about.html` |
 | The terminal's commands, the browser, the dock | `assets/js/os.js` |
+| The pretend agent (pops up, streams fake diffs of this site's own JS and CSS, mascots by model) | `pages/index.html` (`#agent`), `assets/js/os.js` (`agent()`, `SPRITES`, `MODELS`) |
 | Colours and type | the tokens at the top of `assets/css/main.css` |
 | Logo | `includes/logo.html`, `includes/logo-mark.html` |
 | Analytics (Umami) | `includes/analytics.html`, `assets/js/analytics.js`, and `track(…)` calls in `assets/js/os.js` |
