@@ -154,6 +154,201 @@
     </div>
 </section>
 
+<section class="window window--tool window--wide" id="tool-diff" data-window aria-labelledby="diff-title">
+    <include src="window-bar.html" title="diff" close="#main" />
+    <div class="window__body app" data-diff>
+        <h2 id="diff-title">Diff</h2>
+        <p class="tool__nojs">This tool needs JavaScript. <a href="https://tools.adwebdev.xyz/text-diff">Use text diff on tools.adwebdev.xyz</a>.</p>
+        <div class="tool__ui">
+            <div class="app__pair">
+                <div><label class="tool__label" for="diff-a">Before</label><textarea class="field field--area" id="diff-a" rows="7" spellcheck="false" data-diff-a>FROM php:8.3-apache
+RUN docker-php-ext-install pdo_mysql
+COPY . /var/www/html
+EXPOSE 80</textarea></div>
+                <div><label class="tool__label" for="diff-b">After</label><textarea class="field field--area" id="diff-b" rows="7" spellcheck="false" data-diff-b>FROM php:8.4-apache
+RUN docker-php-ext-install pdo_mysql opcache
+COPY . /var/www/html
+COPY php.ini /usr/local/etc/php/
+EXPOSE 80</textarea></div>
+            </div>
+            <div class="tool__row">
+                <label class="tool__check"><input type="checkbox" data-diff-ws> Ignore whitespace</label>
+                <button class="ghost" type="button" data-diff-swap>Swap sides</button>
+                <p class="tool__note" data-diff-stats aria-live="polite"></p>
+            </div>
+            <pre class="diff" data-diff-out></pre>
+        </div>
+    </div>
+</section>
+
+<section class="window window--tool window--wide" id="tool-ascii" data-window aria-labelledby="ascii-title">
+    <include src="window-bar.html" title="ascii-art" close="#main" />
+    <div class="window__body app" data-ascii>
+        <h2 id="ascii-title">ASCII Art</h2>
+        <p class="tool__nojs">This tool needs JavaScript. <a href="https://tools.adwebdev.xyz/ascii-text-drawer">Use the ASCII art generator on tools.adwebdev.xyz</a>.</p>
+        <div class="tool__ui">
+            <label class="tool__label" for="ascii-in">Text</label>
+            <input class="field" id="ascii-in" value="adwebdev" maxlength="40" spellcheck="false" autocomplete="off" data-ascii-in>
+            <div class="tool__row">
+                <label class="tool__label" for="ascii-font">Font</label>
+                <select class="field field--select" id="ascii-font" data-ascii-font>
+                    <option value="'Schibsted Grotesk'">Grotesk</option>
+                    <option value="VT323">Pixel</option>
+                    <option value="Georgia, serif">Serif</option>
+                </select>
+                <label class="tool__label" for="ascii-style">Style</label>
+                <select class="field field--select" id="ascii-style" data-ascii-style>
+                    <option value="blocks">Blocks</option>
+                    <option value="hashes">Hashes</option>
+                    <option value="shades">Shades</option>
+                    <option value="classic">Classic</option>
+                </select>
+            </div>
+            <div class="tool__row">
+                <label class="tool__label" for="ascii-rows">Height</label>
+                <input id="ascii-rows" type="range" min="4" max="16" value="7" data-ascii-rows>
+                <output class="tool__value" for="ascii-rows" data-ascii-rows-out>7</output>
+            </div>
+            <pre class="ascii" data-ascii-out aria-label="ASCII art"></pre>
+            <div class="tool__row"><button class="ghost" type="button" data-copy="[data-ascii-out]">Copy</button></div>
+        </div>
+    </div>
+</section>
+
+<section class="window window--tool window--wide" id="tool-compose" data-window aria-labelledby="compose-title">
+    <include src="window-bar.html" title="docker-compose" close="#main" />
+    <div class="window__body app" data-compose-tool>
+        <h2 id="compose-title">docker run to compose</h2>
+        <p class="window__lead">Paste one or more <code>docker run</code> commands; each becomes a service.</p>
+        <p class="tool__nojs">This tool needs JavaScript. <a href="https://tools.adwebdev.xyz/docker-run-to-docker-compose-converter">Use the converter on tools.adwebdev.xyz</a>.</p>
+        <div class="tool__ui">
+            <label class="tool__label" for="compose-in">docker run</label>
+            <textarea class="field field--area" id="compose-in" rows="6" spellcheck="false" data-compose-in>docker run -d --name drupal -p 8080:80 \
+  -v drupal_files:/var/www/html/sites/default/files \
+  -e DRUPAL_DB_HOST=db --network web \
+  --restart unless-stopped drupal:11-apache
+docker run -d --name db -e MARIADB_ROOT_PASSWORD=secret -v db_data:/var/lib/mysql --network web mariadb:11</textarea>
+            <h3 id="compose-out-title">compose.yaml</h3>
+            <pre class="tool__out tool__out--block" data-compose-out aria-labelledby="compose-out-title"></pre>
+            <ul class="tool__notes" data-compose-notes aria-live="polite"></ul>
+            <div class="tool__row"><button class="ghost" type="button" data-copy="[data-compose-out]">Copy</button></div>
+        </div>
+    </div>
+</section>
+
+<section class="window window--tool" id="tool-hash" data-window aria-labelledby="hash-title">
+    <include src="window-bar.html" title="hash" close="#main" />
+    <div class="window__body app" data-hash>
+        <h2 id="hash-title">Hash</h2>
+        <p class="window__lead">MD5 and the SHA family, worked out by your browser.</p>
+        <p class="tool__nojs">This tool needs JavaScript. <a href="https://tools.adwebdev.xyz/hash-text">Use hash text on tools.adwebdev.xyz</a>.</p>
+        <div class="tool__ui">
+            <label class="tool__label" for="hash-in">Text</label>
+            <textarea class="field field--area" id="hash-in" rows="3" spellcheck="false" data-hash-in>adwebdev</textarea>
+            <div class="tool__row">
+                <label class="tool__label" for="hash-enc">Encoding</label>
+                <select class="field field--select" id="hash-enc" data-hash-enc><option value="hex">Hex</option><option value="base64">Base64</option></select>
+                <label class="tool__check"><input type="checkbox" data-hash-upper> Uppercase</label>
+            </div>
+            <dl class="hashes">
+                <div><dt>MD5</dt><dd><output data-h="md5"></output></dd><dd><button class="ghost ghost--small" type="button" data-copy='[data-h="md5"]'>Copy</button></dd></div>
+                <div><dt>SHA-1</dt><dd><output data-h="sha1"></output></dd><dd><button class="ghost ghost--small" type="button" data-copy='[data-h="sha1"]'>Copy</button></dd></div>
+                <div><dt>SHA-256</dt><dd><output data-h="sha256"></output></dd><dd><button class="ghost ghost--small" type="button" data-copy='[data-h="sha256"]'>Copy</button></dd></div>
+                <div><dt>SHA-384</dt><dd><output data-h="sha384"></output></dd><dd><button class="ghost ghost--small" type="button" data-copy='[data-h="sha384"]'>Copy</button></dd></div>
+                <div><dt>SHA-512</dt><dd><output data-h="sha512"></output></dd><dd><button class="ghost ghost--small" type="button" data-copy='[data-h="sha512"]'>Copy</button></dd></div>
+            </dl>
+            <p class="tool__note">MD5 and SHA-1 are fine for checksums, not for passwords. Keygen's passwords never touch these.</p>
+        </div>
+    </div>
+</section>
+
+<section class="window window--tool" id="tool-lorem" data-window aria-labelledby="lorem-title">
+    <include src="window-bar.html" title="lorem-ipsum" close="#main" />
+    <div class="window__body app" data-lorem>
+        <h2 id="lorem-title">Lorem Ipsum</h2>
+        <p class="tool__nojs">This tool needs JavaScript. <a href="https://tools.adwebdev.xyz/lorem-ipsum-generator">Use the lorem ipsum generator on tools.adwebdev.xyz</a>.</p>
+        <div class="tool__ui">
+            <div class="tool__row">
+                <input id="lorem-count" type="range" min="1" max="12" value="3" data-lorem-count aria-label="How many">
+                <output class="tool__value" for="lorem-count" data-lorem-count-out>3</output>
+                <select class="field field--select" data-lorem-unit aria-label="Of what"><option value="paragraphs">paragraphs</option><option value="sentences">sentences</option><option value="words">words</option></select>
+            </div>
+            <div class="tool__row">
+                <label class="tool__check"><input type="checkbox" checked data-lorem-classic> Start with "Lorem ipsum"</label>
+                <label class="tool__check"><input type="checkbox" data-lorem-html> Wrap in &lt;p&gt;</label>
+            </div>
+            <textarea class="field field--area field--read" rows="9" readonly data-lorem-out aria-label="Generated text"></textarea>
+            <div class="tool__row">
+                <button class="button button--small" type="button" data-lorem-gen>New text</button>
+                <button class="ghost" type="button" data-copy="[data-lorem-out]">Copy</button>
+                <p class="tool__note" data-lorem-stats></p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="window window--tool" id="tool-person" data-window aria-labelledby="person-title">
+    <include src="window-bar.html" title="fake-person" close="#main" />
+    <div class="window__body app" data-faker>
+        <h2 id="person-title" class="visually-hidden">Fake Person</h2>
+        <p class="tool__nojs">This tool needs JavaScript. It makes up people for test data.</p>
+        <div class="tool__ui">
+            <div class="tool__row tool__row--top">
+                <label class="tool__label" for="person-locale">From</label>
+                <select class="field field--select" id="person-locale" data-faker-locale><option value="be">Belgium</option><option value="pt">Portugal</option></select>
+                <button class="button button--small" type="button" data-faker-gen>New person</button>
+            </div>
+            <div class="person">
+                <p class="person__avatar" data-faker-avatar aria-hidden="true"></p>
+                <div>
+                    <p class="person__name" data-faker-name></p>
+                    <p class="person__job" data-faker-job></p>
+                </div>
+            </div>
+            <dl class="tool__facts tool__facts--text" data-faker-facts></dl>
+            <pre class="visually-hidden" data-faker-json></pre>
+            <div class="tool__row">
+                <button class="ghost" type="button" data-copy="[data-faker-json]">Copy as JSON</button>
+            </div>
+            <p class="tool__note">Made up for test data. Emails use the example domains, which never receive mail.</p>
+        </div>
+    </div>
+</section>
+
+<section class="window window--tool" id="tool-colour" data-window aria-labelledby="colour-title">
+    <include src="window-bar.html" title="colours" close="#main" />
+    <div class="window__body app" data-colour>
+        <h2 id="colour-title" class="visually-hidden">Colours</h2>
+        <p class="tool__nojs">This tool needs JavaScript. <a href="https://tools.adwebdev.xyz/color-converter">Use the colour converter on tools.adwebdev.xyz</a>.</p>
+        <div class="tool__ui">
+            <div class="tool__row tool__row--top">
+                <input class="colour__pick" type="color" value="#e2572b" aria-label="Pick a colour" data-colour-pick>
+                <input class="field" value="#e2572b" spellcheck="false" autocomplete="off" aria-label="Colour, as hex, rgb, hsl, oklch or a name" data-colour-in>
+                <button class="ghost" type="button" data-colour-random>Random</button>
+            </div>
+            <p class="tool__note" data-colour-note aria-live="polite"></p>
+            <div class="colour__swatch" data-colour-swatch></div>
+            <dl class="hashes hashes--colour">
+                <div><dt>HEX</dt><dd><output data-c="hex"></output></dd><dd><button class="ghost ghost--small" type="button" data-copy='[data-c="hex"]'>Copy</button></dd></div>
+                <div><dt>RGB</dt><dd><output data-c="rgb"></output></dd><dd><button class="ghost ghost--small" type="button" data-copy='[data-c="rgb"]'>Copy</button></dd></div>
+                <div><dt>HSL</dt><dd><output data-c="hsl"></output></dd><dd><button class="ghost ghost--small" type="button" data-copy='[data-c="hsl"]'>Copy</button></dd></div>
+                <div><dt>OKLCH</dt><dd><output data-c="oklch"></output></dd><dd><button class="ghost ghost--small" type="button" data-copy='[data-c="oklch"]'>Copy</button></dd></div>
+            </dl>
+            <h3>Text on it</h3>
+            <div class="colour__contrast">
+                <p class="colour__sample colour__sample--black" data-colour-black>Aa <span></span></p>
+                <p class="colour__sample colour__sample--white" data-colour-white>Aa <span></span></p>
+            </div>
+            <h3>Tints and shades</h3>
+            <div class="colour__scale" data-colour-scale></div>
+            <div class="tool__row">
+                <span class="tool__label">Complement</span>
+                <button class="colour__step colour__step--single" type="button" data-colour-comp></button>
+            </div>
+        </div>
+    </div>
+</section>
+
 <link rel="prefetch" href="/assets/js/php.js" as="script" data-php>
 <link rel="prefetch" href="/assets/js/php-laravel.js" as="script" data-php>
 <link rel="prefetch" href="/assets/js/php-drupal.js" as="script" data-php>

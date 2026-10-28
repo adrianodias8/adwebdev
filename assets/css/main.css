@@ -333,6 +333,60 @@ html:not(.os) .tool__ui { display: none; }
 .field:focus-visible { outline: none; border-color: var(--signal); }
 .field--short { width: 7ch; text-align: center; }
 
+.tool__row--top { margin-top: 0; }
+.tool__check { display: flex; align-items: center; gap: 0.4rem; font-family: var(--machine); font-size: 1.3rem; cursor: pointer; }
+.tool__out--block { white-space: pre; overflow-x: auto; font-size: 1.25rem; line-height: 1.3; user-select: text; }
+.tool__notes { margin: 0.6rem 0 0; padding-left: 1.2rem; color: var(--phosphor-soft); font-size: 0.95rem; }
+.tool__notes:empty { display: none; }
+.tool__facts--text dd { font-family: var(--text); font-size: 1rem; white-space: pre-line; }
+.field--area { display: block; resize: vertical; font-size: 1.3rem; line-height: 1.3; }
+.field--read { color: var(--phosphor-soft); font-family: var(--text); font-size: 1rem; line-height: 1.55; }
+.field--select { width: auto; padding-block: 0.3rem; font-size: 1.3rem; }
+.ghost--small { min-height: 2rem; padding: 0 0.6rem; font-size: 1.15rem; }
+.app code { font-family: var(--machine); font-size: 1.15em; color: var(--phosphor); }
+.app__pair { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+.app__pair .field--area { margin-top: 0.3rem; }
+
+/* Diff: removals in orange, additions bright, the changed words marked. */
+.diff { margin: 0.85rem 0 0; padding: 0.4rem 0; background: var(--glass); border: 1px solid var(--line); font-family: var(--machine); font-size: 1.25rem; line-height: 1.3; overflow-x: auto; max-height: 22rem; }
+.diff__row { display: grid; grid-template-columns: 2.6ch 2.6ch 2ch minmax(0, 1fr); gap: 0 0.5rem; padding: 0 0.6rem; white-space: pre-wrap; overflow-wrap: anywhere; }
+.diff__n { color: var(--line); text-align: right; user-select: none; }
+.diff__sign { user-select: none; }
+.diff__row--same { color: var(--phosphor-dim); }
+.diff__row--del { color: var(--signal); background: oklch(70% 0.17 45 / 0.08); }
+.diff__row--add { color: var(--phosphor); background: oklch(93% 0.012 95 / 0.07); }
+.diff mark { background: none; color: inherit; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 0.18em; }
+.diff__row--add mark { background: oklch(93% 0.012 95 / 0.16); }
+.diff__row--del mark { background: oklch(70% 0.17 45 / 0.2); }
+
+.ascii { margin: 0.85rem 0 0; padding: 0.75rem; min-height: 6rem; background: var(--glass); border: 1px solid var(--line); font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 0.72rem; line-height: 1.05; letter-spacing: 0; color: var(--phosphor); overflow-x: auto; white-space: pre; }
+
+.hashes { margin: 0.85rem 0 0; }
+.hashes div { display: grid; grid-template-columns: 4.5rem minmax(0, 1fr) auto; gap: 0.75rem; align-items: center; padding: 0.45rem 0; border-top: 1px dashed var(--line); }
+.hashes dt { font-family: var(--machine); font-size: 1.3rem; color: var(--signal); }
+.hashes dd { margin: 0; }
+.hashes output { display: block; font-family: var(--machine); font-size: 1.2rem; line-height: 1.15; color: var(--phosphor); overflow-wrap: anywhere; user-select: all; }
+
+.person { display: flex; align-items: center; gap: 1rem; margin-top: 1rem; }
+.person__avatar { flex: none; display: grid; place-items: center; width: 4rem; height: 4rem; font-family: var(--machine); font-size: 2rem; border: 1px solid var(--phosphor-soft); }
+.person__name { font-size: 1.35rem; font-weight: 700; line-height: 1.2; }
+.person__job { color: var(--phosphor-soft); }
+
+.colour__pick { flex: none; width: 2.5rem; height: 2.5rem; padding: 0; background: none; border: 1px solid var(--phosphor-soft); cursor: pointer; }
+.colour__pick::-webkit-color-swatch-wrapper { padding: 2px; }
+.colour__pick::-webkit-color-swatch { border: 0; }
+.tool__row > .field { flex: 1; min-width: 8rem; }
+.colour__swatch { height: 4.5rem; margin-top: 0.85rem; border: 1px solid var(--line); }
+.colour__contrast { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+.colour__sample { display: flex; align-items: baseline; gap: 0.6rem; padding: 0.6rem 0.75rem; border: 1px solid var(--line); font-size: 1.6rem; font-weight: 700; }
+.colour__sample span { font-family: var(--machine); font-size: 1.1rem; font-weight: 400; }
+.colour__sample--black { color: #000; }
+.colour__sample--white { color: #fff; }
+.colour__scale { display: grid; grid-template-columns: repeat(9, 1fr); height: 2.75rem; border: 1px solid var(--line); }
+.colour__step { padding: 0; border: 0; cursor: pointer; }
+.colour__step:hover, .colour__step:focus-visible { outline: 2px solid var(--phosphor); outline-offset: -2px; }
+.colour__step--single { width: 4rem; height: 2rem; border: 1px solid var(--line); }
+
 .stopwatch__time { display: block; padding: 1rem 0 0.5rem; text-align: center; font-family: var(--machine); font-size: clamp(3.5rem, 2rem + 6vw, 5.5rem); line-height: 1; color: var(--phosphor); text-shadow: 0 0 0.4rem oklch(93% 0.012 95 / 0.3); }
 .stopwatch__laps { list-style: none; margin: 1.25rem 0 0; padding: 0; max-height: 12rem; overflow: auto; font-family: var(--machine); font-size: 1.3rem; }
 .stopwatch__laps li { display: grid; grid-template-columns: 1fr auto auto; gap: 1.5rem; padding: 0.35rem 0; border-top: 1px dashed var(--line); color: var(--phosphor-soft); }
@@ -432,6 +486,7 @@ html.os .window--doc { width: min(52rem, calc(100vw - 2 * var(--gutter))); }
 html.os .window--info { width: min(32rem, calc(100vw - 2 * var(--gutter))); }
 html.os .window--mail { width: min(38rem, calc(100vw - 2 * var(--gutter))); }
 html.os .window--tool { width: min(34rem, calc(100vw - 2 * var(--gutter))); }
+html.os .window--wide { width: min(48rem, calc(100vw - 2 * var(--gutter))); }
 html.os .window--terminal { width: min(40rem, calc(100vw - 2 * var(--gutter))); }
 html.os .window--console { width: min(50rem, calc(100vw - 2 * var(--gutter))); }
 html.os .window--browser { width: min(62rem, calc(100vw - 2 * var(--gutter))); height: calc(100dvh - var(--bar) - var(--dock) - 3rem); }
@@ -549,6 +604,7 @@ pre span[style*="color:#747369"] { color: #a9a79c !important; }
     .list-view th, .list-view td { border: 0; padding: 0.1rem 0.4rem; }
     .list-view__kind { display: none !important; }
     .post-list li { flex-direction: column; gap: 0.3rem; }
+    .app__pair, .colour__contrast { grid-template-columns: 1fr; }
 
     html.os body { overflow: auto; }
     html.os .desktop { height: auto; min-height: calc(100dvh - var(--bar)); padding: var(--gutter) var(--gutter) calc(var(--dock) + 1.5rem); overflow: visible; }

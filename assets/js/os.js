@@ -408,7 +408,8 @@
   function copyButtons() {
     document.querySelectorAll("[data-copy]").forEach((b) => {
       b.addEventListener("click", async () => {
-        const text = b.closest(".app").querySelector(b.dataset.copy)?.textContent || "";
+        const target = b.closest(".app").querySelector(b.dataset.copy);
+        const text = target?.value ?? target?.textContent ?? "";
         try {
           await navigator.clipboard.writeText(text);
           b.textContent = "Copied";
@@ -1119,6 +1120,8 @@
       keygen: "tool-keygen", stopwatch: "tool-stopwatch", chmod: "tool-chmod",
       status: "tool-status", http: "tool-status", keycode: "tool-keycode",
       radio: "tool-radio", nato: "tool-radio", tinker: "tool-tinker", drush: "tool-drush",
+      diff: "tool-diff", ascii: "tool-ascii", compose: "tool-compose", hash: "tool-hash", lorem: "tool-lorem",
+      faker: "tool-person", person: "tool-person", colour: "tool-colour", color: "tool-colour", colours: "tool-colour",
     };
     const statico = document.querySelector('.file[data-kind="browser"][href*="statico"]');
 

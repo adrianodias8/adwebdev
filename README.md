@@ -34,7 +34,7 @@ Pushing to `main` checks, builds and deploys it. See
 | Projects (what opens in the browser, what opens an info window) | `collections/projects.json` |
 | The dock's apps | `collections/dock.json` |
 | Icons | `includes/icons.html` |
-| The Tools folder and its apps (ports of tools.adwebdev.xyz) | `collections/tools.json`, `includes/tools.html` |
+| The Tools folder and its apps (ports of tools.adwebdev.xyz) | `collections/tools.json`, `includes/tools.html`, `assets/js/tools.js` |
 | HTTP status codes | `collections/http_status.json` |
 | Tinker and Drush: a small PHP interpreter, with pretend Laravel and Drupal on top | `assets/js/php.js`, `php-laravel.js`, `php-drupal.js` |
 | Posts | `content/writing/*.md` |
