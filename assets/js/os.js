@@ -374,17 +374,7 @@
           nav.list.push(url);
           nav.at = nav.list.length - 1;
         }
-        doc.addEventListener("click", (e) => {
-          const a = e.target.closest?.("a[href]");
-          if (!a || a.target === "_top") return;
-          if (a.hasAttribute("data-browse")) {
-            e.preventDefault();
-            browse(a.href);
-          } else if (new URL(a.href, url).origin !== location.origin) {
-            e.preventDefault();
-            window.open(a.href, "_blank", "noopener");
-          }
-        });
+        doc.addEventListener("click", (e) => follow(e, url, true));
       } catch {
         name = new URL(url, location.href).hostname;
       }
@@ -407,15 +397,34 @@
       if (!v) return;
       if (!/^[a-z]+:/i.test(v) && !v.startsWith("/") && /\.[a-z]{2,}/i.test(v)) v = `https://${v}`;
       const u = new URL(v, location.href);
-      if (u.origin === location.origin) browse(u.href);
+      if (u.origin === location.origin || FRAMEABLE.has(u.hostname)) browse(u.href);
       else window.open(u.href, "_blank", "noopener");
     });
     buttons();
-    // Links marked data-browse open here too: the longer About, and the
-    // booking page, one of the few other sites glad to be framed.
-    document.querySelectorAll("a[data-browse]").forEach((a) => {
-      a.addEventListener("click", (e) => { e.preventDefault(); browse(a.href); });
-    });
+    document.addEventListener("click", (e) => follow(e, location.href, false));
+  }
+
+  // Where a link goes, from the desktop or from a page in its browser: this
+  // site's pages and the sites that allow framing open in the browser, and
+  // anything else in a real tab. Inside the browser, a link to the desktop
+  // itself means the browser's home page. Links in a page, and clicks with a
+  // modifier key, are left to the browser.
+  const FRAMEABLE = new Set(["adrianodias8.github.io", "calendar.google.com", "tools.adwebdev.xyz"]);
+  function follow(e, base, framed) {
+    const a = e.target.closest?.("a[href]");
+    if (!a || e.defaultPrevented || e.button || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    if (a.hasAttribute("data-external") || a.hasAttribute("download")) return;
+    const to = new URL(a.href, base);
+    const from = new URL(base);
+    if (!/^https?:$/.test(to.protocol)) return;
+    if (to.origin === from.origin && to.pathname === from.pathname && to.hash) return;
+    const desktop = new URL(document.querySelector(".menubar__mark")?.href || "/", location.href).pathname;
+    const own = to.origin === location.origin;
+    if (own && to.pathname === desktop && !framed) return;
+    e.preventDefault();
+    if (own) browse(to.pathname === desktop ? browser.home : to.href);
+    else if (FRAMEABLE.has(to.hostname)) browse(to.href);
+    else window.open(to.href, "_blank", "noopener");
   }
 
   // ---- Mail: nothing is sent from a static site, and opening the visitor's
@@ -1571,12 +1580,13 @@
     if (path) path.textContent = decodeURIComponent(location.pathname);
     track("not-found", { path: location.pathname });
     const reboot = page.querySelector("[data-reboot]");
-    // Inside the desktop's browser, restarting means the whole desktop.
-    const framed = window.top !== window.self;
-    if (framed && reboot) reboot.target = "_top";
+    // Inside the desktop's browser, rebooting goes to the browser's home page.
+    if (reboot && window.top !== window.self) {
+      try { reboot.href = window.top.document.querySelector("[data-browser-home]")?.href || reboot.href; } catch {}
+    }
     addEventListener("keydown", (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.key === "Tab" || e.key === "Shift") return;
-      if (reboot) (framed ? window.top : window).location.href = reboot.href;
+      if (reboot) location.href = reboot.href;
     });
     return true;
   }

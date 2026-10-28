@@ -592,9 +592,9 @@ body:has(.panic) .menubar { display: none; }
     border-bottom: 1px solid var(--line);
     font-family: var(--machine); font-size: 1.35rem; line-height: 1;
 }
-.web-header__mark { width: 2.4rem; color: var(--phosphor); }
-.web-header__mark svg { width: 100%; height: auto; }
-.web-header__name { text-decoration: none; margin-right: auto; }
+.web-header__mark { display: block; width: 2.75rem; margin-right: auto; color: var(--phosphor); }
+.web-header__mark:hover { color: var(--signal); }
+.web-header__mark svg { display: block; width: 100%; height: auto; }
 .web-header__nav { display: flex; flex-wrap: wrap; gap: 1.1rem; }
 .web-header__nav a { color: var(--phosphor-soft); text-decoration: none; }
 .web-header__nav a:hover { color: var(--phosphor); }
