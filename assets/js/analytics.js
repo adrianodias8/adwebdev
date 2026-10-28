@@ -8,14 +8,16 @@
   const send = (name, data) => window.umami.track(name, data);
 
   // Events wait here while the tracker loads; it is async so it never holds
-  // the desktop up.
+  // the desktop up. (Its tag must not have the id "umami": an element's id
+  // becomes a global, and the tracker won't replace an existing
+  // window.umami, so track() would never exist.)
   function track(name, data) {
     try {
       if (window.umami?.track) send(name, data);
       else if (queue.length < 50) queue.push([name, data]);
     } catch {}
   }
-  document.getElementById("umami")?.addEventListener("load", () => {
+  document.getElementById("umami-tracker")?.addEventListener("load", () => {
     queue.splice(0).forEach(([name, data]) => track(name, data));
   });
 
