@@ -1,0 +1,47 @@
+<layout src="web.html" title="Stats · {site.name}" description="How this site gets used: visitors, the apps people open, and a few silly counters. Counted with Umami, without cookies.">
+<article class="article stats" data-stats>
+    <h1>Stats</h1>
+    <p class="article__lead">How this site gets used, counted with <a href="https://umami.is">Umami</a>: no cookies, and nothing here about any one visitor. <span data-stats-updated></span></p>
+
+    <p class="stats__empty" data-stats-empty>No numbers yet. They're gathered when the site is deployed, about once an hour.</p>
+
+    <div data-stats-body hidden>
+        <dl class="stats__tiles">
+            <div><dt>Visitors</dt><dd data-total="visitors"></dd></div>
+            <div><dt>Visits</dt><dd data-total="visits"></dd></div>
+            <div><dt>Page views</dt><dd data-total="pageviews"></dd></div>
+            <div><dt>Average visit</dt><dd data-total="avg_visit_seconds"></dd></div>
+        </dl>
+
+        <h2>Visits per day</h2>
+        <div class="stats__chart" data-stats-days></div>
+
+        <h2>Most opened apps</h2>
+        <ol class="stats__bars" data-stats-apps></ol>
+
+        <h2>Posts read</h2>
+        <ol class="stats__bars" data-stats-posts></ol>
+
+        <h2>Where visitors are</h2>
+        <ol class="stats__bars" data-stats-countries></ol>
+
+        <h2>Silly counters</h2>
+        <dl class="stats__counters">
+            <div><dt>Commands typed in the terminal</dt><dd data-counter="terminal"></dd></div>
+            <div><dt>Lines of pretend PHP run in Tinker and Drush</dt><dd data-counter="php"></dd></div>
+            <div><dt>Tools tried</dt><dd data-counter="tools"></dd></div>
+            <div><dt>Times the agent was told to go away</dt><dd data-counter="agent_closed"></dd></div>
+            <div><dt>Times the screensaver hit the corner</dt><dd data-counter="corners"></dd></div>
+        </dl>
+    </div>
+
+    <!-- Names for what the stats count by id, from the same lists the desktop uses. -->
+    <ul hidden data-stats-names>
+        <ForEach collection="dock" as="d"><li data-id="{d.id}">{d.name}</li></ForEach>
+        <ForEach collection="tools" as="t"><li data-id="tool-{t.id}">{t.name}</li></ForEach>
+        <ForEach collection="projects" as="p"><li data-id="info-{p.id}">{p.name}</li></ForEach>
+        <ForEach content="writing" as="post"><li data-id="{post.url}">{post.title}</li></ForEach>
+    </ul>
+</article>
+<script src="/assets/js/stats.js" defer></script>
+</layout>

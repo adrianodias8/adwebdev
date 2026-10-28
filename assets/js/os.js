@@ -1458,6 +1458,7 @@
     };
     const statico = document.querySelector('.file[data-kind="browser"][href*="/statico/"]');
     const playground = document.querySelector('.file[data-kind="browser"][href*="statico-playground"]');
+    const stats = document.querySelector('.file[data-kind="browser"][href$="/stats/"]');
 
     const neofetch = () => {
       const box = document.createElement("div");
@@ -1510,7 +1511,7 @@
     };
     const commands = {
       help: () => "help, ls, open <name>, whoami, neofetch, uuid, php artisan tinker, drush, book, date, screensaver, clear",
-      ls: () => "About Me  Services  Experience  Mail  Browser  Terminal  Projects/  Posts/  Tools/",
+      ls: () => "About Me  Services  Experience  Mail  Browser  Terminal  Projects/  Posts/  Tools/  Stats",
       uuid: () => crypto.randomUUID?.() || "uuid: needs a secure (https) page.",
       whoami: () => "Adriano Dias. Web developer, Brussels. Drupal, Laravel, static sites, private AI.",
       neofetch,
@@ -1558,10 +1559,11 @@
       if (cmd === "composer") { say("Nothing to install. That is rather the point of a static site."); return; }
       if (cmd === "open" || cmd === "cat") {
         const name = rest.join(" ").toLowerCase().replace(/\/$/, "").replace(/\.app$/, "");
-        const found = Object.hasOwn(targets, name) || (name === "statico" && statico) || (name === "playground" && playground);
+        const found = Object.hasOwn(targets, name) || (name === "statico" && statico) || (name === "playground" && playground) || (name === "stats" && stats);
         track("terminal-command", { command: "open", target: found ? name : "unknown" });
         if (name === "statico" && statico) { say("Opening Statico…"); browse(statico.href); }
         else if (name === "playground" && playground) { say("Opening the Statico Playground…"); browse(playground.href); }
+        else if (name === "stats" && stats) { say("Opening the stats…"); browse(stats.href); }
         else if (targets[name]) { say(`Opening ${rest.join(" ")}…`); targets[name] === "browser" ? browse() : open(targets[name]); }
         else say(`open: no such file: ${rest.join(" ") || "(nothing)"}. Try ls.`);
         return;

@@ -47,6 +47,7 @@ Pushing to `main` checks, builds and deploys it. See
 | Colours and type | the tokens at the top of `assets/css/main.css` |
 | Logo | `includes/logo.html`, `includes/logo-mark.html` |
 | Analytics (Umami) | `includes/analytics.html`, `assets/js/analytics.js`, and `track(…)` calls in `assets/js/os.js` |
+| The Stats page: aggregates fetched from Umami at deploy time, hourly | `pages/stats.html`, `assets/js/stats.js`, `.github/scripts/umami-stats.py` (needs the `UMAMI_SHARE_ID` secret) |
 
 ## Analytics
 

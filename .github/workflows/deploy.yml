@@ -13,6 +13,9 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
+  # Hourly, so the Stats page stays fresh.
+  schedule:
+    - cron: "17 * * * *"
 
 permissions:
   contents: read
@@ -47,6 +50,16 @@ jobs:
           [ -x ~/.cargo/bin/statico ] || cargo install --git https://github.com/adrianodias8/statico --locked
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
           ~/.cargo/bin/statico --version
+
+      # Totals and counts from Umami for the Stats page. The share link's id
+      # is a secret and only its read-only token is used, here and nowhere
+      # else. Without it, or if Umami is down, the page says there are no
+      # numbers yet and the deploy goes ahead.
+      - name: Fetch stats
+        env:
+          UMAMI_SHARE_ID: ${{ secrets.UMAMI_SHARE_ID }}
+          STATS_SINCE: "2026-10-28T10:00:00Z"
+        run: python3 .github/scripts/umami-stats.py > public/stats.json || rm -f public/stats.json
 
       # Fails on broken links, missing anchors, images without alt text and
       # front matter that does not match its schema.
