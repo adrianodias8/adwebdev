@@ -11,6 +11,9 @@
     get: (k) => { try { return localStorage.getItem(k); } catch { return null; } },
     set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
   };
+  // Analytics (analytics.js): what was opened and used, and from where.
+  const track = (name, data) => window.analytics?.track(name, data);
+  const from = () => window.analytics?.from() ?? "url";
 
   // ---- Sound: short blips, off unless the visitor turns it on.
   let audio = null;
@@ -48,6 +51,7 @@
       const on = root.classList.contains("no-crt");
       setCrt(on);
       store.set("os.crt", on ? "on" : "off");
+      track("toggle", { setting: "crt", on });
       blip(on ? 990 : 330, 50);
     });
     const snd = document.querySelector('[data-toggle="sound"]');
@@ -56,6 +60,7 @@
       soundOn = !soundOn;
       snd.setAttribute("aria-pressed", soundOn);
       store.set("os.sound", soundOn ? "on" : "off");
+      track("toggle", { setting: "sound", on: soundOn });
       blip(660, 60);
     });
   }
@@ -80,6 +85,7 @@
       enter.classList.add("is-on");
     };
     const leave = () => {
+      track("boot", { action: enter.classList.contains("is-on") ? "entered" : "skipped" });
       finishLog();
       try { sessionStorage.setItem("os.booted", "1"); } catch {}
       screen.hidden = true;
@@ -152,6 +158,8 @@
       }
       launch(id);
       blip(880, 40);
+      win.dataset.since = Date.now();
+      track("open-app", { app: id, via: from() });
     }
     dockState();
     if (focus) (win.querySelector("[data-focus-first]") || win).focus({ preventScroll: true });
@@ -160,6 +168,7 @@
   }
 
   function close(win) {
+    if (win.dataset.since) track("close-app", { app: win.id, seconds: Math.round((Date.now() - win.dataset.since) / 1000) });
     win.hidden = true;
     delete win.dataset.min;
     win.classList.remove("is-front", "is-zoomed");
@@ -237,6 +246,8 @@
   // ---- Files and folders: one click selects, a double click (or Enter, or a
   // tap on a touch screen) opens, as in the Finder.
   function activate(a) {
+    if (a.dataset.slug) track("open-project", { project: a.dataset.slug });
+    else if (a.closest("#posts")) track("open-post", { post: new URL(a.href).pathname });
     if (a.dataset.open) return open(a.dataset.open);
     if (a.dataset.kind === "browser") return browse(a.href);
     if (a.dataset.kind === "info") return open(a.dataset.info);
@@ -296,6 +307,7 @@
   // ---- Browser: its own history, an address bar, and posts as web pages.
   // Other sites mostly refuse to be framed, so their links open in a real tab.
   const nav = { list: [], at: -1 };
+  let counted = "";
   let browser = null;
   function browse(url) {
     if (!browser) return;
@@ -375,6 +387,11 @@
       } catch {
         name = new URL(url, location.href).hostname;
       }
+      // Other sites can fire load twice for one visit, so count each once.
+      const u = new URL(url, location.href);
+      const page = u.origin === location.origin ? u.pathname : u.hostname;
+      if (counted !== `${nav.at} ${page}`) track("browser-page", { page });
+      counted = `${nav.at} ${page}`;
       show(url, name);
     }
     frame.addEventListener("load", loaded);
@@ -406,6 +423,7 @@
       e.preventDefault();
       const subject = form.querySelector('[name="subject"]').value;
       const body = form.querySelector('[name="body"]').value;
+      track("send-mail");
       location.href = `mailto:${form.dataset.to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     });
   }
@@ -744,14 +762,16 @@
       if (hitX && hitY) {
         corners += 1;
         note.textContent = corners === 1 ? "It hit the corner." : `It hit the corner. ${corners} times now.`;
+        if (corners === 1) track("screensaver-corner");
       }
       logo.style.transform = `translate(${x}px, ${y}px)`;
       raf = requestAnimationFrame(frame);
     };
     const reading = () => visible().length > 0;
     const booting = () => !!document.querySelector("[data-boot]:not([hidden])");
-    const show = () => {
+    const show = (how = "idle") => {
       if (booting()) return arm();
+      track("screensaver", { how });
       screen.hidden = false;
       x = Math.random() * Math.max(1, innerWidth - logo.offsetWidth);
       y = Math.random() * Math.max(1, innerHeight - logo.offsetHeight);
@@ -774,7 +794,7 @@
     }
     document.addEventListener("visibilitychange", () => (document.hidden ? (clearTimeout(idle), hide()) : arm()));
     arm();
-    saver = show;
+    saver = () => show("command");
   }
 
   // ---- Tinker and Drush: consoles over a small PHP interpreter (php.js and
@@ -873,9 +893,12 @@
       laravel: ["collect([1, 2, 3])->map(fn($n) => $n * 2)->sum()", "Post::latest()->first()->title", "Project::pluck('name')", "Str::slug('Olá, Bruxelas!')", "now()->diffForHumans(Carbon::parse('2011-01-05'))", "User::factory()->count(3)->create()->pluck('name')", "fake()->name()"],
       drupal: ["\\Drupal::VERSION", "Node::load(1)->label()", "\\Drupal::entityQuery('node')->accessCheck(FALSE)->execute()", "\\Drupal::config('system.site')->get('name')", "\\Drupal::messenger()->addStatus(t('Hello @name', ['@name' => 'you']))", "drupal_set_message('old habits')"],
     };
+    const shell = make === "laravel" ? "tinker" : "drush-php";
+    const SHELL = { help: "help", ls: "ls", wtf: "wtf", "wtf?": "wtf", clear: "clear", exit: "exit", quit: "exit", q: "exit", "exit;": "exit", "exit()": "exit" };
     return async (raw) => {
       const cmd = raw.trim();
       c.say(`${buffer ? "..." : ">"} ${raw}`, "is-cmd");
+      if (!buffer && Object.hasOwn(SHELL, cmd)) track("console-command", { console: shell, command: SHELL[cmd] });
       if (!buffer) {
         if (cmd === "") return;
         if (["exit", "quit", "q", "exit;", "exit()"].includes(cmd)) {
@@ -912,6 +935,7 @@
       buffer = "";
       c.prompt(">");
       c.lines(r.lines);
+      track("console-command", { console: shell, command: "php", result: r.lines.some((l) => l.cls === "is-error") ? "error" : "ok" });
     };
   }
   const BANNER = "Psy Shell v0.12.9 (PHP 8.4.0 — cli) by Justin Hileman";
@@ -1084,11 +1108,13 @@
       if (cmd === "clear") { c.clear(); return; }
       const [bin, sub, ...args] = words(cmd);
       if (!["drush", "vendor/bin/drush", "./vendor/bin/drush"].includes(bin)) {
+        track("console-command", { console: "drush", command: "not-drush" });
         c.say(`${bin}: only drush lives in here. Try drush list.`, "is-dim");
         return;
       }
       const name = sub === undefined ? "list" : ALIASES[sub] || sub;
-      const run = COMMANDS[name];
+      const run = Object.hasOwn(COMMANDS, name) ? COMMANDS[name] : null;
+      track("console-command", { console: "drush", command: run ? name : "unknown" });
       if (!run) {
         c.say(` [error]  Command "${sub}" is not defined.`, "is-error");
         return;
@@ -1189,7 +1215,11 @@
       whoami: () => "Adriano Dias. Web developer, Brussels. Drupal, Laravel, static sites, private AI.",
       neofetch,
       date: () => new Intl.DateTimeFormat("en-GB", { dateStyle: "full", timeStyle: "short", timeZone: "Europe/Brussels" }).format(new Date()),
-      book: () => { if (book) browse(book); return "Opening the booking page…"; },
+      book: () => {
+        track("book-call", { from: "terminal" });
+        if (book) browse(book);
+        return "Opening the booking page…";
+      },
       screensaver: () => {
         if (!saver) return "screensaver: not available here.";
         setTimeout(saver, 400);
@@ -1209,6 +1239,8 @@
       if (!raw) return;
       say(`$ ${raw}`, "is-cmd");
       const [cmd, ...rest] = raw.split(/\s+/);
+      const known = Object.hasOwn(commands, cmd) || ["drush", "vendor/bin/drush", "php", "composer", "open", "cat"].includes(cmd);
+      if (cmd !== "open" && cmd !== "cat") track("terminal-command", { command: known ? cmd : "unknown" });
       if (cmd === "drush" || cmd === "vendor/bin/drush") {
         say("Opening Drush…");
         open("tool-drush");
@@ -1226,13 +1258,15 @@
       if (cmd === "composer") { say("Nothing to install. That is rather the point of a static site."); return; }
       if (cmd === "open" || cmd === "cat") {
         const name = rest.join(" ").toLowerCase().replace(/\/$/, "").replace(/\.app$/, "");
+        const found = Object.hasOwn(targets, name) || (name === "statico" && statico) || (name === "playground" && playground);
+        track("terminal-command", { command: "open", target: found ? name : "unknown" });
         if (name === "statico" && statico) { say("Opening Statico…"); browse(statico.href); }
         else if (name === "playground" && playground) { say("Opening the Statico Playground…"); browse(playground.href); }
         else if (targets[name]) { say(`Opening ${rest.join(" ")}…`); targets[name] === "browser" ? browse() : open(targets[name]); }
         else say(`open: no such file: ${rest.join(" ") || "(nothing)"}. Try ls.`);
         return;
       }
-      const out = commands[cmd] ? commands[cmd]() : `${cmd}: command not found. Try help.`;
+      const out = Object.hasOwn(commands, cmd) ? commands[cmd]() : `${cmd}: command not found. Try help.`;
       if (out) say(out);
       blip(740, 20);
     });
@@ -1244,6 +1278,7 @@
     if (!page) return false;
     const path = page.querySelector("[data-panic-path]");
     if (path) path.textContent = decodeURIComponent(location.pathname);
+    track("not-found", { path: location.pathname });
     const reboot = page.querySelector("[data-reboot]");
     // Inside the desktop's browser, restarting means the whole desktop.
     const framed = window.top !== window.self;
