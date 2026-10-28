@@ -38,6 +38,7 @@ Pushing to `main` checks, builds and deploys it. See
 | HTTP status codes | `collections/http_status.json` |
 | Tinker and Drush: a small PHP interpreter, with pretend Laravel and Drupal on top | `assets/js/php.js`, `php-laravel.js`, `php-drupal.js` |
 | Posts | `content/writing/*.md` |
+| Redirects from the old adwebdev.xyz URLs (`/post/…`, `/posts/`, `/projects/`) | `pages/post/`, `pages/posts.html`, `pages/projects.html`, `includes/redirect.html` |
 | The boot log and window contents | `pages/index.html` |
 | Bio | `pages/about.html` |
 | The terminal's commands, the browser, the dock | `assets/js/os.js` |

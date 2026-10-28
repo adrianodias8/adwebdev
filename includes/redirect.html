@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{from} has moved · {site.name}</title>
+    <meta name="description" content="{from} has moved to {to}.">
+    <meta name="robots" content="noindex">
+    <link rel="canonical" href="{to}">
+    <script>location.replace(document.querySelector('link[rel="canonical"]').href);</script>
+</head>
+<body>
+    <p>This page has moved: <a href="{to}">{site.name}</a>.</p>
+</body>
+</html>

@@ -2,9 +2,9 @@ name: Deploy
 
 # Builds the site with Statico and publishes it to GitHub Pages.
 #
-# Statico is built from its repository because this site is served from a
-# sub-path (/adwebdev), which needs a change made after v0.1.0. Once v0.2.0
-# is released, replace the "Install Statico" step with the released binary:
+# Statico is built from its repository, for changes made after v0.1.0. Once
+# v0.2.0 is released, replace the "Install Statico" step with the released
+# binary:
 #
 #   - run: |
 #       curl -fsSL "https://github.com/adrianodias8/statico/releases/download/v0.2.0/statico-x86_64-unknown-linux-musl.tar.gz" \
@@ -25,7 +25,7 @@ concurrency:
 
 env:
   # Where the site is served. Everything root-relative is published under it.
-  SITE_URL: https://adrianodias8.github.io/adwebdev
+  SITE_URL: https://adwebdev.xyz
 
 jobs:
   deploy:
