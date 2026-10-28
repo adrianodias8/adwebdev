@@ -177,14 +177,26 @@
         <include src="window-bar.html" title="new-message.eml" close="#main" />
         <form class="compose" action="mailto:{site.email}" method="get" data-compose data-to="{site.email}">
             <div class="compose__toolbar">
-                <button class="button" type="submit">Send</button>
+                <button class="button" type="submit" data-copy-field="#mail-body">Copy message</button>
                 <a class="text-action" href="{site.booking}" target="_blank" rel="noopener" data-browse>Or book a call</a>
             </div>
             <h2 id="contact-title" class="visually-hidden">Write to Adriano</h2>
-            <div class="compose__field"><label for="mail-to">To:</label><input id="mail-to" value="{site.email}" readonly></div>
-            <div class="compose__field"><label for="mail-subject">Subject:</label><input id="mail-subject" name="subject" value="A project"></div>
+            <p class="compose__note">Edit the draft, copy it, and paste it into an email from your own account. Nothing is sent from here.</p>
+            <div class="compose__field"><label for="mail-to">To:</label><input id="mail-to" value="{site.email}" readonly><button class="compose__copy" type="button" data-copy-field="#mail-to">Copy</button></div>
+            <div class="compose__field"><label for="mail-subject">Subject:</label><input id="mail-subject" name="subject" value="A project"><button class="compose__copy" type="button" data-copy-field="#mail-subject">Copy</button></div>
             <label class="visually-hidden" for="mail-body">Message</label>
-            <textarea id="mail-body" name="body" rows="9" placeholder="Tell me a little about your project, and when you'd like to start."></textarea>
+            <textarea id="mail-body" name="body" rows="13">Hi Adriano,
+
+I'm [your name], from [your company]. We'd like help with [a Drupal or Laravel site / private AI / something else].
+
+What we need:
+- 
+
+When we'd like to start: 
+Budget, roughly: 
+
+Thanks,
+[your name]</textarea>
         </form>
     </section>
 

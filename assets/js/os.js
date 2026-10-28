@@ -417,16 +417,25 @@
     });
   }
 
-  // ---- Mail: send through the visitor's own mail app.
+  // ---- Mail: nothing is sent from a static site, and opening the visitor's
+  // mail app often goes nowhere, so Mail is a draft to edit and copy. Each
+  // field copies on its own; the main button copies the message.
   function compose() {
     const form = document.querySelector("[data-compose]");
-    form?.addEventListener("submit", (e) => {
+    if (!form) return;
+    const copy = async (button) => {
+      const field = form.querySelector(button.dataset.copyField);
+      const what = { "mail-to": "The address", "mail-subject": "The subject", "mail-body": "The message" }[field.id];
+      const ok = await window.clipboard?.copyText(field.value);
+      window.clipboard?.show(button, !!ok, what, "Select it and copy");
+      if (ok) track("copy-message", { part: field.name || "to" });
+      blip(990, 30);
+    };
+    form.addEventListener("submit", (e) => {
       e.preventDefault();
-      const subject = form.querySelector('[name="subject"]').value;
-      const body = form.querySelector('[name="body"]').value;
-      track("send-mail");
-      location.href = `mailto:${form.dataset.to}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      copy(e.submitter || form.querySelector('[type="submit"]'));
     });
+    form.querySelectorAll('button[type="button"][data-copy-field]').forEach((b) => b.addEventListener("click", () => copy(b)));
   }
 
   // ---- Tools: small ports of tools.adwebdev.xyz. Each runs in its window,

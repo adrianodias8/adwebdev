@@ -41,6 +41,7 @@ Pushing to `main` checks, builds and deploys it. See
 | The boot log and window contents | `pages/index.html` |
 | Bio | `pages/about.html` |
 | The terminal's commands, the browser, the dock | `assets/js/os.js` |
+| Email links copy the address instead of opening a mail app | `assets/js/email.js` |
 | The pretend agent (pops up, streams fake diffs of this site's own JS and CSS, mascots by model) | `pages/index.html` (`#agent`), `assets/js/os.js` (`agent()`, `SPRITES`, `MODELS`) |
 | Colours and type | the tokens at the top of `assets/css/main.css` |
 | Logo | `includes/logo.html`, `includes/logo-mark.html` |
@@ -64,8 +65,8 @@ No event carries anything a visitor types.
 | `open-post` | `post` | A post opens from the Posts folder |
 | `browser-page` | `page` (a path, or another site's host) | A page loads in the desktop's browser |
 | `book-call` | `from` | Any booking link, or the terminal's `book` |
-| `email-click` | `from` | An email link |
-| `send-mail` | | The Mail window's Send |
+| `copy-email` | `from` | An email link (they copy the address) |
+| `copy-message` | `part` (to, subject, body) | A Copy button in the Mail window |
 | `outbound` | `host`, `from` | A link to another site |
 | `use-tool` | `tool` | The first use of a tool in a visit |
 | `tool-action` | `tool`, `action` (the button's label) | A button in a tool |

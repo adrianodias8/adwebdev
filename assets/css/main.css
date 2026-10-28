@@ -259,7 +259,10 @@ html:not(.os) .window__min, html:not(.os) .window__zoom { display: none; }
 .compose { display: grid; }
 .compose__toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; padding: 0.75rem 1rem; border-bottom: 1px dashed var(--line); }
 .compose__toolbar .button { min-height: 2.5rem; font-size: 1.3rem; }
-.compose__field { display: grid; grid-template-columns: 6rem minmax(0, 1fr); align-items: center; border-bottom: 1px dashed var(--line); }
+.compose__note { padding: 0.6rem 1rem; border-bottom: 1px dashed var(--line); font-size: 0.95rem; color: var(--phosphor-dim); }
+.compose__field { display: grid; grid-template-columns: 6rem minmax(0, 1fr) auto; align-items: center; border-bottom: 1px dashed var(--line); }
+.compose__copy { margin-right: 0.75rem; padding: 0.15rem 0.6rem; background: none; border: 1px solid var(--line); color: var(--phosphor-soft); font-family: var(--machine); font-size: 1.15rem; cursor: pointer; }
+.compose__copy:hover { border-color: var(--phosphor-soft); color: var(--phosphor); }
 .compose__field label { padding: 0.5rem 1rem; font-family: var(--machine); font-size: 1.3rem; color: var(--phosphor-dim); }
 .compose input, .compose textarea { min-width: 0; padding: 0.55rem 1rem 0.55rem 0; background: none; border: 0; color: var(--phosphor); }
 .compose input:focus-visible, .compose textarea:focus-visible { outline: none; background: var(--glass); }

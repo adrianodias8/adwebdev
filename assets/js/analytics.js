@@ -41,16 +41,16 @@
   addEventListener("keydown", note, true);
   const from = () => (performance.now() - last.at < 1500 ? last.from : "url");
 
-  // Links: a call booked, an email started, or a visitor leaving for another
-  // site. Files in the folders open in the desktop's browser, so they are
-  // counted there instead.
+  // Links: a call booked, the email address copied, or a visitor leaving for
+  // another site. Files in the folders open in the desktop's browser, so they
+  // are counted there instead.
   addEventListener("click", (e) => {
     const a = e.target.closest?.("a[href]");
     if (!a || a.classList.contains("file")) return;
     const url = new URL(a.href, location.href);
     const at = where(a);
     if (url.hostname === "calendar.google.com") track("book-call", { from: at });
-    else if (url.protocol === "mailto:") track("email-click", { from: at });
+    else if (url.protocol === "mailto:") track("copy-email", { from: at });
     else if (/^https?:$/.test(url.protocol) && url.origin !== location.origin) track("outbound", { host: url.hostname, from: at });
   }, true);
 
