@@ -5,7 +5,8 @@ My site: [adrianodias8.github.io/adwebdev](https://adrianodias8.github.io/adwebd
 It is a small operating system. It boots, then opens on a desktop with the
 logo as its wallpaper, a Projects, a Posts and a Tools folder, and a dock of apps:
 windows open, drag, stack, minimise to the dock, zoom and close; posts open
-as web pages in a built-in browser; and the terminal works. Without
+as web pages in a built-in browser; the terminal works; and Tinker and Drush
+run real (if small) PHP in the browser. Without
 JavaScript it is one ordinary readable page, and reduced motion skips the
 boot.
 
@@ -35,6 +36,7 @@ Pushing to `main` checks, builds and deploys it. See
 | Icons | `includes/icons.html` |
 | The Tools folder and its apps (ports of tools.adwebdev.xyz) | `collections/tools.json`, `includes/tools.html` |
 | HTTP status codes | `collections/http_status.json` |
+| Tinker and Drush: a small PHP interpreter, with pretend Laravel and Drupal on top | `assets/js/php.js`, `php-laravel.js`, `php-drupal.js` |
 | Posts | `content/writing/*.md` |
 | The boot log and window contents | `pages/index.html` |
 | Bio | `pages/about.html` |

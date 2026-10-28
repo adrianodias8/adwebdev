@@ -43,7 +43,7 @@
             <h2 id="projects-title" class="visually-hidden">Projects</h2>
             <ul class="icon-view">
                 <ForEach collection="projects" as="p">
-                <li><a class="file" href="<If condition="p.open == 'browser'">{p.url}<Else>#info-{p.id}</If>" data-file data-kind="{p.open}" data-info="info-{p.id}"><svg class="file__icon"><use href="#i-{p.icon}"/></svg><span class="file__name">{p.name}</span></a></li>
+                <li><a class="file" href="<If condition="p.open == 'browser'">{p.url}<Else>#info-{p.id}</If>" data-file data-kind="{p.open}" data-info="info-{p.id}" data-slug="{p.id}" data-type="{p.kind}" data-status="{p.status}" data-about="{p.about}"><svg class="file__icon"><use href="#i-{p.icon}"/></svg><span class="file__name">{p.name}</span></a></li>
                 </ForEach>
             </ul>
         </div>
@@ -90,7 +90,7 @@
 
     <section class="window window--folder" id="tools" data-window aria-labelledby="tools-title">
         <include src="window-bar.html" title="tools/" close="#main" />
-        <p class="folder__status">7 items · double-click to open</p>
+        <p class="folder__status">9 items · double-click to open</p>
         <div class="window__body folder">
             <h2 id="tools-title" class="visually-hidden">Tools</h2>
             <ul class="icon-view">

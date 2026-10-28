@@ -78,7 +78,7 @@
 
 <section class="window window--tool" id="tool-status" data-window aria-labelledby="status-title">
     <include src="window-bar.html" title="http-status" close="#main" />
-    <div class="window__body app" data-status>
+    <div class="window__body app" data-http-status>
         <h2 id="status-title">HTTP status codes</h2>
         <div class="tool__ui">
             <form class="tool__row" data-status-form>
@@ -137,3 +137,23 @@
         </div>
     </div>
 </section>
+
+<section class="window window--terminal window--console" id="tool-tinker" data-window aria-labelledby="tinker-title">
+    <include src="window-bar.html" title="php artisan tinker" close="#main" />
+    <div class="window__body terminal" data-console="tinker" role="log">
+        <h2 id="tinker-title" class="visually-hidden">Tinker</h2>
+        <noscript><p>Tinker needs JavaScript: it is a small PHP interpreter that runs in your browser.</p></noscript>
+    </div>
+</section>
+
+<section class="window window--terminal window--console" id="tool-drush" data-window aria-labelledby="drush-title">
+    <include src="window-bar.html" title="drush" close="#main" />
+    <div class="window__body terminal" data-console="drush" role="log">
+        <h2 id="drush-title" class="visually-hidden">Drush</h2>
+        <noscript><p>Drush needs JavaScript: it is a small PHP interpreter that runs in your browser.</p></noscript>
+    </div>
+</section>
+
+<link rel="prefetch" href="/assets/js/php.js" as="script" data-php>
+<link rel="prefetch" href="/assets/js/php-laravel.js" as="script" data-php>
+<link rel="prefetch" href="/assets/js/php-drupal.js" as="script" data-php>

@@ -273,6 +273,14 @@ html.os .browser__nojs { display: none; }
 .terminal__line { display: flex; gap: 0.5rem; margin-top: 0.4rem; }
 .terminal__line label { color: var(--signal); }
 .terminal__line input { flex: 1; min-width: 0; background: none; border: 0; outline: none; color: var(--phosphor); font: inherit; caret-color: var(--signal); }
+/* Tinker and Drush: output, values, warnings and errors, PsySH-style. */
+.terminal .is-out, .terminal .is-ok { color: var(--phosphor); }
+.terminal .is-value { color: var(--phosphor-soft); }
+.terminal .is-dim { color: var(--phosphor-dim); }
+.terminal .is-warn { color: var(--signal-strong); }
+.terminal .is-error { color: var(--signal); }
+.terminal a { color: var(--phosphor); text-decoration-color: var(--signal); overflow-wrap: anywhere; }
+.window--console .terminal { min-height: 24rem; font-size: 1.3rem; }
 
 /* neofetch: the logo beside a readout whose facts are the CV. */
 .neofetch { display: grid; grid-template-columns: 5.5rem minmax(0, 1fr); gap: 1.25rem; align-items: start; margin: 0.4rem 0 0.6rem; }
@@ -425,6 +433,7 @@ html.os .window--info { width: min(32rem, calc(100vw - 2 * var(--gutter))); }
 html.os .window--mail { width: min(38rem, calc(100vw - 2 * var(--gutter))); }
 html.os .window--tool { width: min(34rem, calc(100vw - 2 * var(--gutter))); }
 html.os .window--terminal { width: min(40rem, calc(100vw - 2 * var(--gutter))); }
+html.os .window--console { width: min(50rem, calc(100vw - 2 * var(--gutter))); }
 html.os .window--browser { width: min(62rem, calc(100vw - 2 * var(--gutter))); height: calc(100dvh - var(--bar) - var(--dock) - 3rem); }
 html.os .window__body { overflow: auto; }
 html.os .window__bar { cursor: grab; }

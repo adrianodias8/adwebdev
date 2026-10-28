@@ -1,8 +1,10 @@
 [
-  { "id": "keygen", "name": "Keygen", "icon": "key" },
-  { "id": "stopwatch", "name": "Stopwatch", "icon": "stopwatch" },
-  { "id": "chmod", "name": "Chmod", "icon": "lock" },
-  { "id": "status", "name": "HTTP Status", "icon": "teapot" },
-  { "id": "keycode", "name": "Keycode", "icon": "keycap" },
-  { "id": "radio", "name": "NATO Radio", "icon": "radio" }
+  {"id": "keygen", "name": "Keygen", "icon": "key"},
+  {"id": "stopwatch", "name": "Stopwatch", "icon": "stopwatch"},
+  {"id": "chmod", "name": "Chmod", "icon": "lock"},
+  {"id": "status", "name": "HTTP Status", "icon": "teapot"},
+  {"id": "keycode", "name": "Keycode", "icon": "keycap"},
+  {"id": "radio", "name": "NATO Radio", "icon": "radio"},
+  {"id": "tinker", "name": "Tinker", "icon": "wrench"},
+  {"id": "drush", "name": "Drush", "icon": "drop"}
 ]

@@ -579,7 +579,7 @@
   }
 
   function statusCodes() {
-    const box = document.querySelector("[data-status]");
+    const box = document.querySelector("[data-http-status]");
     if (!box) return;
     const rows = [...box.querySelectorAll("[data-code]")];
     const input = box.querySelector("[data-status-in]");
@@ -769,6 +769,330 @@
     saver = show;
   }
 
+  // ---- Tinker and Drush: consoles over a small PHP interpreter (php.js and
+  // its Laravel and Drupal layers). The scripts are fetched the first time
+  // either console is used, so the desktop itself stays light.
+  let phpReady = null;
+  function loadPhp() {
+    phpReady ??= [...document.querySelectorAll("link[data-php]")].reduce((chain, link) => chain.then(() => new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = link.href;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error(`Could not load ${link.href}`));
+      document.head.append(s);
+    })), Promise.resolve());
+    return phpReady;
+  }
+
+  // What the pretend frameworks know about this site, read from the page.
+  function siteData() {
+    const root = document.querySelector(".menubar__mark")?.href || location.origin;
+    return {
+      email: document.querySelector("[data-compose]")?.dataset.to || "",
+      siteUrl: root.replace(/\/$/, ""),
+      posts: [...document.querySelectorAll("#posts tbody tr")].map((tr) => ({
+        title: tr.querySelector(".file__name")?.textContent || "",
+        url: new URL(tr.querySelector("a").href).pathname,
+        date: tr.querySelector("time")?.getAttribute("datetime") || "",
+      })),
+      projects: [...document.querySelectorAll("#projects .file[data-slug]")].map((a) => ({
+        slug: a.dataset.slug, name: a.querySelector(".file__name").textContent,
+        kind: a.dataset.type || "", status: a.dataset.status || "", about: a.dataset.about || "",
+      })),
+    };
+  }
+
+  function makeConsole(term, onLine) {
+    const line = document.createElement("form");
+    line.className = "terminal__line";
+    const id = `${term.dataset.console}-in`;
+    line.innerHTML = `<label for="${id}"></label><input id="${id}" autocomplete="off" autocapitalize="off" spellcheck="false">`;
+    term.append(line);
+    const label = line.querySelector("label");
+    const input = line.querySelector("input");
+    input.setAttribute("aria-label", `${term.dataset.console} input`);
+    const history = [];
+    let at = 0;
+    const api = {
+      busy: false,
+      say(text, cls, href) {
+        const p = document.createElement("p");
+        if (href) {
+          const a = document.createElement("a");
+          a.href = href;
+          a.textContent = text;
+          a.addEventListener("click", (e) => { e.preventDefault(); browse(href); });
+          p.append(a);
+        } else p.textContent = text;
+        if (cls) p.className = cls;
+        line.before(p);
+        term.scrollTop = term.scrollHeight;
+      },
+      lines(list) { for (const l of list) api.say(l.text, l.cls); },
+      prompt(text) { label.textContent = text; },
+      clear() { term.querySelectorAll(":scope > p").forEach((n) => n.remove()); },
+      submit(text) { input.value = text; line.requestSubmit(); },
+    };
+    line.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (api.busy) return;
+      const raw = input.value;
+      input.value = "";
+      if (raw.trim()) history.push(raw);
+      at = history.length;
+      api.busy = true;
+      try {
+        await onLine(raw, api);
+      } catch (err) {
+        api.say(`   Error  ${err.message}`, "is-error");
+      } finally {
+        api.busy = false;
+      }
+      blip(740, 20);
+    });
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowUp" && at > 0) { input.value = history[--at]; e.preventDefault(); }
+      else if (e.key === "ArrowDown") { at = Math.min(history.length, at + 1); input.value = history[at] ?? ""; e.preventDefault(); }
+    });
+    return api;
+  }
+
+  // A PsySH-style REPL over one interpreter; shared by Tinker and drush php.
+  function repl(c, make, done) {
+    let php = null;
+    let buffer = "";
+    const examples = {
+      laravel: ["collect([1, 2, 3])->map(fn($n) => $n * 2)->sum()", "Post::latest()->first()->title", "Project::pluck('name')", "Str::slug('Olá, Bruxelas!')", "now()->diffForHumans(Carbon::parse('2011-01-05'))", "User::factory()->count(3)->create()->pluck('name')", "fake()->name()"],
+      drupal: ["\\Drupal::VERSION", "Node::load(1)->label()", "\\Drupal::entityQuery('node')->accessCheck(FALSE)->execute()", "\\Drupal::config('system.site')->get('name')", "\\Drupal::messenger()->addStatus(t('Hello @name', ['@name' => 'you']))", "drupal_set_message('old habits')"],
+    };
+    return async (raw) => {
+      const cmd = raw.trim();
+      c.say(`${buffer ? "..." : ">"} ${raw}`, "is-cmd");
+      if (!buffer) {
+        if (cmd === "") return;
+        if (["exit", "quit", "q", "exit;", "exit()"].includes(cmd)) {
+          c.say("   INFO  Goodbye.", "is-dim");
+          php = null;
+          done();
+          return;
+        }
+        if (cmd === "clear") { c.clear(); return; }
+        if (cmd === "help") {
+          c.say("A few things to try:", "is-dim");
+          for (const ex of examples[make]) c.say(`  ${ex}`);
+          c.say("Also: ls (your variables), wtf (the last error again), clear, exit. Arrow keys bring back what you typed.", "is-dim");
+          return;
+        }
+        if (cmd === "wtf" || cmd === "wtf?") {
+          const err = php?.lastError;
+          c.say(err ? `   ${err.type}  ${err.text}\n  at {main}()\n  at psy-shell-code:1` : "   INFO  No exception yet. Try harder.", err ? "is-error" : "is-dim");
+          return;
+        }
+        if (cmd === "ls") {
+          const vars = php ? php.variables() : [];
+          c.say(vars.length ? `Variables: ${vars.map((v) => `$${v}`).join(", ")}` : "Variables: none yet.", "is-dim");
+          return;
+        }
+      }
+      buffer += (buffer ? "\n" : "") + raw;
+      if (!php) {
+        await loadPhp();
+        php = MiniPhp.create(make, siteData());
+      }
+      const r = php.run(buffer);
+      if (r.incomplete) { c.prompt("..."); return; }
+      buffer = "";
+      c.prompt(">");
+      c.lines(r.lines);
+    };
+  }
+  const BANNER = "Psy Shell v0.12.9 (PHP 8.4.0 — cli) by Justin Hileman";
+
+  function tinker() {
+    const term = document.querySelector('[data-console="tinker"]');
+    if (!term) return;
+    let run;
+    const c = makeConsole(term, (raw) => run(raw));
+    const begin = () => {
+      run = repl(c, "laravel", () => { begin(); });
+      c.say(BANNER, "is-dim");
+      c.say("A pretend Tinker: a small PHP in your browser, over this site's posts and projects. Type help for ideas.", "is-dim");
+      c.prompt(">");
+    };
+    begin();
+  }
+
+  let drushRun = null;
+  function drush() {
+    const term = document.querySelector('[data-console="drush"]');
+    if (!term) return;
+    let php = null;
+    let inRepl = null;
+    const site = () => php.drupal;
+    const ready = async () => {
+      if (!php) {
+        await loadPhp();
+        php = MiniPhp.create("drupal", siteData());
+      }
+      return php;
+    };
+    const wait = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
+    const table = (rows) => {
+      const widths = rows[0].map((_, i) => Math.max(...rows.map((r) => String(r[i]).length)));
+      return rows.map((r) => ` ${r.map((v, i) => String(v).padEnd(widths[i])).join("   ")}`.trimEnd());
+    };
+    const ts = () => MiniPhp.phpDate("d/M H:i", Date.now());
+    const root = (document.querySelector(".menubar__mark")?.href || "/").replace(/\/?$/, "/");
+    const LIST = [
+      ["cache:rebuild (cr)", "Rebuild a Drupal site and clear all its caches."],
+      ["core:cron (cron)", "Run all cron hooks in all active modules."],
+      ["core:status (st)", "An overview of the environment."],
+      ["config:get (cget)", "Display a config value."],
+      ["config:export (cex)", "Export Drupal configuration to a directory."],
+      ["config:import (cim)", "Import config from the sync directory."],
+      ["deploy", "Run several commands after a deploy."],
+      ["php:cli (php)", "Open an interactive shell on a Drupal site."],
+      ["php:eval (ev)", "Evaluate arbitrary PHP code after bootstrapping Drupal."],
+      ["pm:install (en)", "Enable one or more modules."],
+      ["pm:list (pml)", "Show a list of modules."],
+      ["pm:uninstall (pmu)", "Uninstall one or more modules."],
+      ["sql:query (sqlq)", "Execute a query against a database."],
+      ["state:get (sget)", "Display a state value."],
+      ["updatedb (updb)", "Apply any database updates required."],
+      ["user:login (uli)", "Display a one-time login link for user ID 1."],
+      ["watchdog:show (ws)", "Show watchdog messages."],
+    ];
+    const ALIASES = { cr: "cache:rebuild", rebuild: "cache:rebuild", "cache-rebuild": "cache:rebuild", cron: "core:cron", st: "core:status", status: "core:status", cget: "config:get", cex: "config:export", cim: "config:import", php: "php:cli", "core:cli": "php:cli", ev: "php:eval", eval: "php:eval", en: "pm:install", "pm-enable": "pm:install", pml: "pm:list", "pm-list": "pm:list", pmu: "pm:uninstall", sqlq: "sql:query", sqlc: "sql:cli", "sql-cli": "sql:cli", sget: "state:get", sset: "state:set", updb: "updatedb", uli: "user:login", ws: "watchdog:show", "wd-show": "watchdog:show", si: "site:install", gen: "generate", list: "list", help: "list", "--version": "version", upwd: "user:password" };
+    const COMMANDS = {
+      list: (a, c) => {
+        c.say("Drush Commandline Tool 13.x", "is-dim");
+        for (const line of table(LIST)) c.say(line);
+      },
+      version: (a, c) => c.say(" Drush version : 13.x"),
+      "core:status": (a, c) => {
+        const d = site();
+        for (const line of table([
+          ["Drupal version", ":", d.VERSION], ["Site URI", ":", root.replace(/\/$/, "")], ["DB driver", ":", "none (a static site)"],
+          ["PHP version", ":", "8.4.0 (in your browser)"], ["Drush version", ":", "13.x"], ["Install profile", ":", "minimal"],
+          ["Default theme", ":", "phosphor"], ["Admin theme", ":", "claro"], ["Drupal root", ":", "/var/www/html/web"], ["Site path", ":", "sites/default"],
+        ])) c.say(line);
+      },
+      "cache:rebuild": async (a, c) => {
+        await wait(700);
+        c.say(" [success] Cache rebuild complete.", "is-ok");
+      },
+      "core:cron": async (a, c) => {
+        c.say(" [notice] Starting execution of node_cron().", "is-dim");
+        await wait(400);
+        site().state.set("system.cron_last", Math.floor(Date.now() / 1000));
+        c.say(" [notice] Cron run completed.", "is-ok");
+      },
+      updatedb: (a, c) => c.say(" [success] No pending updates.", "is-ok"),
+      "config:import": (a, c) => c.say(" [notice] There are no changes to import.", "is-ok"),
+      "config:export": (a, c) => c.say(" [notice] The active configuration is identical to the configuration in the export directory (../config/sync).", "is-ok"),
+      deploy: async (a, c) => {
+        c.say(" [notice] Database updates start.", "is-dim");
+        c.say(" [success] No pending updates.", "is-ok");
+        c.say(" [notice] Config import start.", "is-dim");
+        c.say(" [notice] There are no changes to import.", "is-ok");
+        await wait(600);
+        c.say(" [success] Cache rebuild complete.", "is-ok");
+        c.say(" [success] Deploy hooks done.", "is-ok");
+      },
+      "config:get": ([name, key], c) => {
+        if (!name) return c.say(" [error]  Not enough arguments (missing: \"config_name\").", "is-error");
+        const r = php.run(`\\Drupal::config(${JSON.stringify(name)})->get(${JSON.stringify(key || "")})`);
+        if (r.value === null || r.value === undefined) return c.say(` [error]  Config ${name}${key ? `:${key}` : ""} does not exist`, "is-error");
+        c.say(`'${name}${key ? `:${key}` : ""}': ${typeof r.value === "object" ? php.printR(r.value).trim() : php.str(r.value)}`);
+      },
+      "state:get": ([key], c) => {
+        const v = site().state.get(key);
+        c.say(v === undefined ? " [error]  No state value for that key." : php.str(v), v === undefined ? "is-error" : "");
+      },
+      "state:set": ([key, value], c) => { site().state.set(key, value); c.say(` [success] ${key} set.`, "is-ok"); },
+      "pm:list": (a, c) => {
+        const rows = [["Package", "Name", "Status"]];
+        const pkg = { admin_toolbar: "Contrib", pathauto: "Contrib", devel: "Contrib", adwebdev_desktop: "Custom" };
+        for (const [m, on] of Object.entries(site().modules)) rows.push([pkg[m] || "Core", m, on ? "Enabled" : "Disabled"]);
+        for (const line of table(rows)) c.say(line);
+      },
+      "pm:install": (names, c) => {
+        if (!names.length) return c.say(" [error]  Not enough arguments (missing: \"modules\").", "is-error");
+        for (const m of names) {
+          if (!(m in site().modules)) { c.say(` [error]  Unable to install modules ${m} due to missing modules ${m}.`, "is-error"); continue; }
+          site().modules[m] = true;
+          c.say(` [success] Module ${m} has been installed.`, "is-ok");
+        }
+      },
+      "pm:uninstall": (names, c) => {
+        for (const m of names) {
+          if (["node", "user", "system"].includes(m)) { c.say(` [error]  The following reasons prevent the modules from being uninstalled: Required by Drupal (core)`, "is-error"); continue; }
+          if (m in site().modules) site().modules[m] = false;
+          c.say(` [success] Successfully uninstalled: ${m}`, "is-ok");
+        }
+      },
+      "user:login": (a, c) => {
+        const hash = MiniPhp.md5(String(Math.random())).slice(0, 22);
+        const link = `${root}user/reset/1/${Math.floor(Date.now() / 1000)}/${hash}/login`;
+        c.say(link, "is-out", link);
+        c.say("   (It goes where every login on a static site goes.)", "is-dim");
+      },
+      "user:password": ([name], c) => c.say(` [success] Changed password for ${name || "adriano"}.`, "is-ok"),
+      "watchdog:show": (a, c) => {
+        const rows = [["ID", "Date", "Type", "Severity", "Message"],
+          ["512", ts(), "page not found", "Warning", "/wp-login.php"],
+          ["511", ts(), "cron", "Info", "Cron run completed."],
+          ["510", ts(), "page not found", "Warning", "/.env"],
+          ["509", ts(), "user", "Notice", "Session opened for adriano."],
+          ["508", ts(), "php", "Notice", "Deprecated function: drupal_set_message() called from a 2011 memory."],
+          ["507", ts(), "system", "Info", "adwebdev_desktop module installed."]];
+        for (const line of table(rows)) c.say(line);
+      },
+      "sql:query": (a, c) => c.say(" [error]  No database here. The site is static files on GitHub Pages; that is rather the point.", "is-error"),
+      "sql:cli": (a, c) => COMMANDS["sql:query"](a, c),
+      "sql:dump": (a, c) => COMMANDS["sql:query"](a, c),
+      "site:install": (a, c) => c.say(" [error]  Already installed. Since 2011, as it happens.", "is-error"),
+      generate: (a, c) => c.say(" [error]  Code generation needs a real disk. Try drush php.", "is-error"),
+      "php:eval": (args, c) => {
+        const code = args.join(" ");
+        if (!code) return c.say(" [error]  Not enough arguments (missing: \"code\").", "is-error");
+        const r = php.run(code);
+        for (const l of r.lines) if (!l.text.startsWith("= ")) c.say(l.text.replace(/⏎$/, ""), l.cls);
+        if (r.hasValue && r.value !== null && r.value !== undefined) c.say(typeof r.value === "object" ? php.printR(r.value).trimEnd() : php.str(r.value), "is-out");
+      },
+      "php:cli": (a, c) => {
+        inRepl = repl(c, "drupal", () => { inRepl = null; c.prompt("$"); });
+        c.say(BANNER, "is-dim");
+        c.say("Drupal is bootstrapped, more or less. Type help for ideas, exit to leave.", "is-dim");
+        c.prompt(">");
+      },
+    };
+    const words = (s) => [...s.matchAll(/"([^"]*)"|'([^']*)'|(\S+)/g)].map((m) => m[1] ?? m[2] ?? m[3]);
+    const c = makeConsole(term, async (raw, c) => {
+      if (inRepl) return inRepl(raw);
+      const cmd = raw.trim();
+      c.say(`$ ${raw}`, "is-cmd");
+      if (!cmd) return;
+      if (cmd === "clear") { c.clear(); return; }
+      const [bin, sub, ...args] = words(cmd);
+      if (!["drush", "vendor/bin/drush", "./vendor/bin/drush"].includes(bin)) {
+        c.say(`${bin}: only drush lives in here. Try drush list.`, "is-dim");
+        return;
+      }
+      const name = sub === undefined ? "list" : ALIASES[sub] || sub;
+      const run = COMMANDS[name];
+      if (!run) {
+        c.say(` [error]  Command "${sub}" is not defined.`, "is-error");
+        return;
+      }
+      await ready();
+      await run(args, c);
+    });
+    c.say("A pretend Drush over a pretend Drupal, both running in your browser. Try drush status, drush cr, drush uli, drush php or drush list.", "is-dim");
+    c.prompt("$");
+    drushRun = (text) => c.submit(text);
+  }
+
   // ---- Terminal
   function terminal() {
     const term = document.querySelector("[data-terminal]");
@@ -794,7 +1118,7 @@
       adwebdev: "info-adwebdev", berth: "info-berth", tools: "tools",
       keygen: "tool-keygen", stopwatch: "tool-stopwatch", chmod: "tool-chmod",
       status: "tool-status", http: "tool-status", keycode: "tool-keycode",
-      radio: "tool-radio", nato: "tool-radio",
+      radio: "tool-radio", nato: "tool-radio", tinker: "tool-tinker", drush: "tool-drush",
     };
     const statico = document.querySelector('.file[data-kind="browser"][href*="statico"]');
 
@@ -848,7 +1172,7 @@
       return null;
     };
     const commands = {
-      help: () => "help, ls, open <name>, whoami, neofetch, uuid, book, date, screensaver, clear",
+      help: () => "help, ls, open <name>, whoami, neofetch, uuid, php artisan tinker, drush, book, date, screensaver, clear",
       ls: () => "About Me  Services  Experience  Mail  Browser  Terminal  Projects/  Posts/  Tools/",
       uuid: () => crypto.randomUUID?.() || "uuid: needs a secure (https) page.",
       whoami: () => "Adriano Dias. Freelance web developer, Brussels. Drupal, Laravel, static sites.",
@@ -874,6 +1198,21 @@
       if (!raw) return;
       say(`$ ${raw}`, "is-cmd");
       const [cmd, ...rest] = raw.split(/\s+/);
+      if (cmd === "drush" || cmd === "vendor/bin/drush") {
+        say("Opening Drush…");
+        open("tool-drush");
+        drushRun?.(raw);
+        return;
+      }
+      if (cmd === "php") {
+        const what = rest.join(" ");
+        if (what === "-v" || what === "--version") say("PHP 8.4.0 (cli) (pretend: it runs in your browser)");
+        else if (what === "-a" || what.startsWith("artisan tinker")) { say("Opening Tinker…"); open("tool-tinker"); }
+        else if (what.startsWith("artisan")) say("Only tinker is installed here: php artisan tinker");
+        else say("php: try php artisan tinker, or php -v");
+        return;
+      }
+      if (cmd === "composer") { say("Nothing to install. That is rather the point of a static site."); return; }
       if (cmd === "open" || cmd === "cat") {
         const name = rest.join(" ").toLowerCase().replace(/\/$/, "").replace(/\.app$/, "");
         if (name === "statico" && statico) { say("Opening Statico…"); browse(statico.href); }
@@ -894,9 +1233,12 @@
     const path = page.querySelector("[data-panic-path]");
     if (path) path.textContent = decodeURIComponent(location.pathname);
     const reboot = page.querySelector("[data-reboot]");
+    // Inside the desktop's browser, restarting means the whole desktop.
+    const framed = window.top !== window.self;
+    if (framed && reboot) reboot.target = "_top";
     addEventListener("keydown", (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.key === "Tab" || e.key === "Shift") return;
-      if (reboot) location.href = reboot.href;
+      if (reboot) (framed ? window.top : window).location.href = reboot.href;
     });
     return true;
   }
@@ -913,6 +1255,8 @@
     browserUp();
     compose();
     tools();
+    tinker();
+    drush();
     screensaver();
     terminal();
     dockState();
