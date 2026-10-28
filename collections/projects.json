@@ -12,6 +12,18 @@
     "status": "Released"
   },
   {
+    "id": "playground",
+    "name": "Playground",
+    "icon": "playground",
+    "kind": "Statico in your browser",
+    "about": "Statico compiled to WebAssembly: edit a site and watch it rebuild, with nothing installed and nothing sent anywhere.",
+    "url": "https://adrianodias8.github.io/statico-playground/",
+    "open": "browser",
+    "link": "https://github.com/adrianodias8/statico-playground",
+    "link_label": "Source on GitHub",
+    "status": "Try it"
+  },
+  {
     "id": "adwebdev",
     "name": "adwebdev",
     "icon": "adwebdev",

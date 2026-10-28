@@ -1123,7 +1123,8 @@
       diff: "tool-diff", ascii: "tool-ascii", compose: "tool-compose", hash: "tool-hash", lorem: "tool-lorem",
       faker: "tool-person", person: "tool-person", colour: "tool-colour", color: "tool-colour", colours: "tool-colour",
     };
-    const statico = document.querySelector('.file[data-kind="browser"][href*="statico"]');
+    const statico = document.querySelector('.file[data-kind="browser"][href*="/statico/"]');
+    const playground = document.querySelector('.file[data-kind="browser"][href*="statico-playground"]');
 
     const neofetch = () => {
       const box = document.createElement("div");
@@ -1219,6 +1220,7 @@
       if (cmd === "open" || cmd === "cat") {
         const name = rest.join(" ").toLowerCase().replace(/\/$/, "").replace(/\.app$/, "");
         if (name === "statico" && statico) { say("Opening Statico…"); browse(statico.href); }
+        else if (name === "playground" && playground) { say("Opening the Statico Playground…"); browse(playground.href); }
         else if (targets[name]) { say(`Opening ${rest.join(" ")}…`); targets[name] === "browser" ? browse() : open(targets[name]); }
         else say(`open: no such file: ${rest.join(" ") || "(nothing)"}. Try ls.`);
         return;
