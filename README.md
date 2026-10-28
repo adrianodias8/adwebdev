@@ -1,6 +1,6 @@
 # adwebdev
 
-My site: [adrianodias8.github.io/adwebdev](https://adrianodias8.github.io/adwebdev/)
+My site: [adwebdev.xyz](https://adwebdev.xyz/)
 
 It is a small operating system. It boots, then opens on a desktop with the
 logo as its wallpaper, a Projects, a Posts and a Tools folder, and a dock of apps:
@@ -18,7 +18,7 @@ generator I wrote. No Node, no build tools: plain HTML, CSS and one script.
 ```bash
 statico dev       # http://localhost:3000, reloads on save
 statico check     # links, alt text, front matter
-statico build https://adrianodias8.github.io/adwebdev
+statico build https://adwebdev.xyz
 ```
 
 Pushing to `main` checks, builds and deploys it. See
