@@ -411,7 +411,8 @@
       else window.open(u.href, "_blank", "noopener");
     });
     buttons();
-    // A few other sites are glad to be framed, the booking page among them.
+    // Links marked data-browse open here too: the longer About, and the
+    // booking page, one of the few other sites glad to be framed.
     document.querySelectorAll("a[data-browse]").forEach((a) => {
       a.addEventListener("click", (e) => { e.preventDefault(); browse(a.href); });
     });
